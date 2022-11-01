@@ -31,11 +31,13 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
+
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('', include('tentap.urls')),
+    path('api/', include(router.urls)),
     path('admin/', admin.site.urls),
     path('api-path/', include('rest_framework.urls'))
 ]
