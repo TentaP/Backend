@@ -2,16 +2,17 @@ from django.db import models
 from django.contrib.postgres.fields import ArrayField
 
 
-class User(models.User):
+class User(models.Model):
     user_name = models.CharField(max_length=200, unique=True)
     e_mail = models.EmailField(unique=True)
     password = models.CharField(max_length=200)
     is_admin = models.BooleanField(default=False)
     is_super_user = models.BooleanField(default=False)
-    university = models.ForeignKey(University) 
+    # university = models.ForeignKey(University)
 
 
 # Files model skeleton
+"""
 class File(models.Model):
     file_name = models.CharField(max_length=200)
     uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -29,5 +30,6 @@ class University(models.Model):
 class Course(models.Model):
     course_name = models.CharField(max_length=200)
     at_university = models.ForeignKey(University) # TODO change to be related to university model
-    Files = models.ForeignKey(File, related_name='files')
- # TODO change to be related to files model 
+    Files = models.ForeignKey(File, related_name='files')  # TODO change to be related to files model 
+
+"""
