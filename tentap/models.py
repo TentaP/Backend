@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.postgres.fields import ArrayField
 
 
-class User(models.Model):
+class Users(models.Model):
     user_name = models.CharField(max_length=200, unique=True)
     e_mail = models.EmailField(unique=True)
     password = models.CharField(max_length=200)
