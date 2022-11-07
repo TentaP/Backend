@@ -7,7 +7,6 @@ from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from tentap.security import encode_password
 from tentap.serializers import UsersSerializer
 from tentap.permissions import *
 

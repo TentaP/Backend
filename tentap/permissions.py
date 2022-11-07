@@ -38,7 +38,7 @@ class isSuperUser(permissions.BasePermission):
 
     def has_permission(self, request, view):
         try:
-            if get_user(request).is_super_user:
+            if get_user(request).is_superuser:
                 return True
             return False
         except:
