@@ -10,6 +10,7 @@ class User(AbstractUser):
     password = models.CharField(max_length=255)
     is_admin = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = []

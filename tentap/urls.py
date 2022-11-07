@@ -7,6 +7,7 @@ urlpatterns = [
     path('api/login/', auth.login.as_view()),
     path('api/logout/', auth.logout.as_view()),
     path('api/signup/', auth.signup.as_view()),
+    path('api/verifection/<str:email>/<str:hash_>', auth.emailVerification.as_view()),
     path('api/user/', auth.userView.as_view()),
     path('api/users/<int:pk>', auth.user_details)
 ]

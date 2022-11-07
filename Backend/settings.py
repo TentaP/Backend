@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
 from pathlib import Path
+
+import django.core.mail.backends.console
+
 import secret
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -142,3 +145,8 @@ CORS_ALLOW_CREDENTIALS = True
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+EMAIL_HOST = 'smtp.mailtrap.io'
+EMAIL_HOST_USER = 'abcb9eafaaa6eb'
+EMAIL_HOST_PASSWORD = '7f95672a57d851'
+EMAIL_PORT = '2525'

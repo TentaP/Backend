@@ -7,7 +7,7 @@ from tentap.models import User
 class UsersSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'password', 'is_admin', 'is_superuser']
+        fields = ['id', 'username', 'email', 'password', 'is_admin', 'is_superuser', 'is_active']
         extra_kwargs = {
             'password': {'write_only': True}
         }
@@ -20,7 +20,11 @@ class UsersSerializer(serializers.ModelSerializer):
             instance.set_password(password)
         instance.save()
         return instance
-        # return User.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        instance.is_active = validated_data.get('is_active', True)
+        instance.save()
+        return instance
 
     # def update(self, instance, validated_data):
     #     instance.id = validated_data.get('id', instance.id)
