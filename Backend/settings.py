@@ -49,6 +49,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',
     ],
     # https://django-rest-framework-simplejwt.readthedocs.io/en/latest/index.html
+    # TODO maybe remove this
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication'
     ],

@@ -1,5 +1,4 @@
 import datetime
-import jwt
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.exceptions import AuthenticationFailed
@@ -11,6 +10,8 @@ from tentap.serializers import UsersSerializer
 from tentap.permissions import *
 
 
+# https://www.youtube.com/watch?v=PUzgZrS_piQ&ab_channel=ScalableScripts
+# https://www.youtube.com/watch?v=yiYpFMk9QdA&t=355s&ab_channel=PrettyPrinted
 class signup(APIView):
 
     def post(self, request):
@@ -107,7 +108,6 @@ def users_list(request):
 
     elif request.method == 'POST':
         data = JSONParser().parse(request)
-        data['password'] = encode_password(data['password'])
         serializer = UsersSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
