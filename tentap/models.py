@@ -1,14 +1,27 @@
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
+from django.contrib.auth.models import AbstractUser
 
 
-class Users(models.Model):
-    user_name = models.CharField(max_length=200, unique=True)
-    e_mail = models.EmailField(unique=True)
-    password = models.CharField(max_length=200)
+# Create your models here.
+class User(AbstractUser):
+    username = models.CharField(max_length=255, unique=True)
+    email = models.CharField(max_length=255, unique=True)
+    password = models.CharField(max_length=255)
     is_admin = models.BooleanField(default=False)
     is_super_user = models.BooleanField(default=False)
-    # university_name = models.CharField(max_length=200) TODO
+
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = []
+
+
+# class User(models.Model):
+#     user_name = models.CharField(max_length=200, unique=True)
+#     e_mail = models.EmailField(unique=True)
+#     password = models.CharField(max_length=200)
+#     is_admin = models.BooleanField(default=False)
+#     is_super_user = models.BooleanField(default=False)
+#     # university_name = models.CharField(max_length=200) TODO
 
 
 # Files model skeleton
@@ -29,7 +42,6 @@ class University(models.Model):
         models.CharField(max_length=200)
     )
 """
-
 
 # Courses model skeleton
 """
