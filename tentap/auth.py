@@ -31,7 +31,7 @@ class signup(APIView):
         hash_ = serializer.data['email'] + secret.SECRET_KEY
         msg = f"http://127.0.0.1:8000/api/verifection/{serializer.data['email']}/{encode_link(hash_)}"
         send_mail('verify your email', msg, 'noubah-8@studnet.ltu.se', [str(serializer.data['email'])])
-        # print(f"http://127.0.0.1:8000/api/verifection/{serializer.data['email']}/{encode_link(hash_)}") # SEND THIS
+        print(f"http://127.0.0.1:8000/api/verifection/{serializer.data['email']}/{encode_link(hash_)}")  # SEND THIS
         # VIA EMAIL
         return JsonResponse({"RESPONSE": "CREATED"}, status=201)
 
@@ -126,6 +126,55 @@ class emailVerification(APIView):
             return Response({'message': 'account activated!'})
         else:
             return Response({'message': 'wrong activation link'})
+
+
+class setSuperUser(APIView):
+    permission_classes = [isSuperUser]
+
+    def put(self, request):
+        data = JSONParser().parse(request)
+        username = data['username']
+        user = User.objects.filter(username=username).first()
+        if user is None:
+            raise AuthenticationFailed('user not found!')
+        if user.is_superuser:
+            raise AuthenticationFailed(f'{username} is already a super user')
+        user.is_superuser = True
+        user.is_admin = True
+        user.save()
+        return Response({'message': f'{username} is superuser now!'})
+
+
+class setAdmin(APIView):
+    permission_classes = [isSuperUser]
+
+    def put(self, request):
+        data = JSONParser().parse(request)
+        username = data['username']
+        user = User.objects.filter(username=username).first()
+        if user is None:
+            raise AuthenticationFailed('user not found!')
+        if user.is_admin:
+            raise AuthenticationFailed(f'{username} is already an admin')
+        user.is_admin = True
+        user.save()
+        return Response({'message': f'{username} is admin now!'})
+
+
+class removeAdmin(APIView):
+    permission_classes = [isSuperUser]
+
+    def put(self, request):
+        data = JSONParser().parse(request)
+        username = data['username']
+        user = User.objects.filter(username=username).first()
+        if user is None:
+            raise AuthenticationFailed('user not found!')
+        if not user.is_admin:
+            raise AuthenticationFailed(f'{username} is not an admin')
+        user.is_admin = False
+        user.save()
+        return Response({'message': f'{username} is removed as an admin now!'})
 
 
 @csrf_exempt
