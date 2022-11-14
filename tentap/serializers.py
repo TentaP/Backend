@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from tentap.models import User
+from tentap.models import User, Course, File
 
 
 # https://www.django-rest-framework.org/tutorial/1-serialization/
@@ -20,28 +20,51 @@ class UsersSerializer(serializers.ModelSerializer):
             instance.set_password(password)
         instance.save()
         return instance
-        # return User.objects.create(**validated_data)
 
-    # def update(self, instance, validated_data):
-    #     instance.id = validated_data.get('id', instance.id)
-    #     instance.user_name = validated_data.get('user_name', instance.user_name)
-    #     instance.email = validated_data.get('email', instance.email)
-    #     instance.password = validated_data.get('password', instance.password)
-    #     instance.save()
-    #     return instance
+"""
+class TokensSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tokens
+        fields = ['id', 'user_name', 'access_token', 'refresh_token']
 
-# class TokensSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Tokens
-#         fields = ['id', 'user_name', 'access_token', 'refresh_token']
-#
-#     def create(self, validated_data):
-#         return Tokens.objects.create(**validated_data)
-#
-#     def update(self, instance, validated_data):
-#         instance.id = validated_data.get('id', instance.id)
-#         instance.user_name = validated_data.get('user_name', instance.user_name)
-#         instance.access_token = validated_data.get('access_token', instance.access_token)
-#         instance.refresh_token = validated_data.get('refresh_token', instance.refresh_token)
-#         instance.save()
-#         return instance
+    def create(self, validated_data):
+        return Tokens.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        instance.id = validated_data.get('id', instance.id)
+        instance.user_name = validated_data.get('user_name', instance.user_name)
+        instance.access_token = validated_data.get('access_token', instance.access_token)
+        instance.refresh_token = validated_data.get('refresh_token', instance.refresh_token)
+        instance.save()
+        return instance
+"""
+
+# Course
+class CourseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = ['course_name', 'at_university', 'files']
+
+    def create(self, validated_data):
+        return Course.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        instance.course_name = validated_data.get('course_name', instance.course_name)
+        instance.at_university = validated_data.get('at_university', instance.at_university)
+        instance.files = validated_data.get('files', instance.files)
+        return instance
+
+# File
+class FileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = ['file_name', 'uploaded_by', 'course', 'at_university', 'date_of_uploading', 'reviews', 'file_type']
+
+    def create(self, validated_data):
+        return Course.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        instance.file_name = validated_data.get('file_name', instance.file_name)
+        instance.course = validated_data.get('course', instance.course_name)
+        return instance
+

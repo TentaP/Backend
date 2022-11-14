@@ -14,39 +14,37 @@ class User(AbstractUser):
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = []
 
+class File(models.Model):
+    # Types of files, subject to change.
+    class fileType(models.TextChoices):
+        EX = 'EX', 'Exam'
+        AS = 'AS', 'ASSIGNMENT'
+        LB = 'LB', 'Lab'
 
-# class User(models.Model):
-#     user_name = models.CharField(max_length=200, unique=True)
-#     e_mail = models.EmailField(unique=True)
-#     password = models.CharField(max_length=200)
-#     is_admin = models.BooleanField(default=False)
-#     is_super_user = models.BooleanField(default=False)
-#     # university_name = models.CharField(max_length=200) TODO
-
-
-# Files model skeleton
-"""
-class Files(models.Model):
     file_name = models.CharField(max_length=200)
-    uploaded_by = Users.user_name  # change to be related to the user
-    course_name = models.CharField(max_length=200)
-    university_name = models.CharField(max_length=200)  # change to be related to the university
+    uploaded_by = models.ForeignKey('User', on_delete=models.CASCADE)
+    course = models.ForeignKey('Course', on_delete=models.CASCADE)
+    at_university = models.ForeignKey('University', on_delete=models.CASCADE)    
     date_of_uploading = models.DateTimeField(auto_now=True)
-"""
+    reviews = models.ForeignKey('Review', related_name='reviews', on_delete=models.CASCADE)
+    file_type = models.CharField(
+        max_length=2,
+        choices=fileType.choices,
+        default=fileType.AS
+    )
 
-# University model skeleton
-"""
 class University(models.Model):
     university_name = models.CharField(max_length=200,unique=True)
-    courses = ArrayField(
-        models.CharField(max_length=200)
-    )
-"""
+    courses = models.ForeignKey('Course', related_name='Courses', on_delete=models.CASCADE)
 
-# Courses model skeleton
-"""
-class Courses(models.Model):
+class Course(models.Model):
     course_name = models.CharField(max_length=200)
-    at_university = models.CharField(max_length=200) # TODO change to be related to university model
-    Files = models.CharField(max_length=200) # TODO change to be related to files model 
-"""
+    at_university = models.ForeignKey('University', on_delete=models.CASCADE) 
+    Files = models.ForeignKey('File', related_name='files', on_delete=models.CASCADE)
+
+
+class Review(models.Model):
+    author = models.ForeignKey('User',related_name='Author', on_delete=models.CASCADE)
+    review = models.DecimalField(decimal_places=1, max_digits=1)
+    body = models.CharField(max_length=700)
+

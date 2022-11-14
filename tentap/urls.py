@@ -1,7 +1,8 @@
 from django.urls import path
 
 from . import views
-from . import auth
+from .api import auth
+
 urlpatterns = [
     path('', views.index, name='index'),
     path('api/login/', auth.login.as_view()),
