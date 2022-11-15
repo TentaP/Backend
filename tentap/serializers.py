@@ -22,9 +22,19 @@ class UsersSerializer(serializers.ModelSerializer):
         return instance
 
     def update(self, instance, validated_data):
-        instance.is_active = validated_data.get('is_active', True)
+        password = validated_data.pop('password', None)
+        print(password)
+        instance = self.Meta.model(**validated_data)
+        if password is not None:
+            instance.set_password(password)
         instance.save()
         return instance
+
+
+    # def update(self, instance, validated_data):
+    #     instance.is_active = validated_data.get('is_active', True)
+    #     instance.save()
+    #     return instance
 
     # def update(self, instance, validated_data):
     #     instance.id = validated_data.get('id', instance.id)

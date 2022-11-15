@@ -1,7 +1,7 @@
 import datetime
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.exceptions import *
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -9,11 +9,12 @@ from rest_framework.views import APIView
 from tentap.serializers import UsersSerializer
 from tentap.permissions import *
 from tentap.security import encode_link, email_validation
-from django.core.mail import BadHeaderError, send_mail
+from django.core.mail import send_mail
 
 
 # https://www.youtube.com/watch?v=PUzgZrS_piQ&ab_channel=ScalableScripts
 # https://www.youtube.com/watch?v=yiYpFMk9QdA&t=355s&ab_channel=PrettyPrinted
+# https://www.django-rest-framework.org/api-guide/exceptions/#parseerror list of exceptions that we can use
 class signup(APIView):
 
     def post(self, request):
@@ -31,9 +32,8 @@ class signup(APIView):
         hash_ = serializer.data['email'] + secret.SECRET_KEY
         msg = f"http://127.0.0.1:8000/api/verifection/{serializer.data['email']}/{encode_link(hash_)}"
         send_mail('verify your email', msg, 'noubah-8@studnet.ltu.se', [str(serializer.data['email'])])
-        print(f"http://127.0.0.1:8000/api/verifection/{serializer.data['email']}/{encode_link(hash_)}")  # SEND THIS
-        # VIA EMAIL
-        return JsonResponse({"RESPONSE": "CREATED"}, status=201)
+        print(msg)  # TODO remove this
+        return Response({"RESPONSE": "CREATED"}, status=201)
 
 
 class login(APIView):
@@ -115,7 +115,7 @@ class userView(APIView):
 
 
 class emailVerification(APIView):
-    def get(self, request, email: str, hash_: str):
+    def post(self, request, email: str, hash_: str):
         salted_email = email.lower() + secret.SECRET_KEY
         if hash_ == encode_link(salted_email):
             user = User.objects.filter(email=email.lower()).first()
@@ -176,6 +176,61 @@ class removeAdmin(APIView):
         user.save()
         return Response({'message': f'{username} is removed as an admin now!'})
 
+
+class requestPasswordResetLink(APIView):
+
+    def post(self, request):
+        data = JSONParser().parse(request)
+        email = data['email']
+        user = User.objects.filter(email=email).first()
+
+        if user is None:
+            raise AuthenticationFailed('user not found!')
+
+        msg = f"http://127.0.0.1:8000/api/reset_password_link/{email}/{str(encode_link(email + secret.SECRET_KEY))}"
+        send_mail('reset your password', msg, 'noubah-8@studnet.ltu.se', [str(email)])
+        print(msg)
+
+        return Response({'message': f'An email has been sent to {email}'})
+
+
+class resetPasswordViaLink(APIView):
+    def put(self, request, email: str, hash_: str):
+        if not encode_link(email + secret.SECRET_KEY) == hash_:
+            raise AuthenticationFailed('wrong reset link!')
+
+        data = JSONParser().parse(request)
+        user = User.objects.filter(email=email).first()
+        user.set_password(data['password'])
+        user.save()
+
+        return Response({'message': f'Update password for {email}'})
+
+
+class resetPassword(APIView):
+    permission_classes = [isNormalUser | isAdminUser | isSuperUser]
+
+    def put(self, request):
+        token = request.COOKIES.get('jwt')
+
+        if not token:
+            raise AuthenticationFailed('Unauthenticated!')
+
+        try:
+            payload = jwt.decode(token, secret.SECRET_KEY, algorithms='HS256')
+        except jwt.ExpiredSignatureError:
+            raise AuthenticationFailed('Unauthenticated!')
+
+        print(payload)
+        user = User.objects.filter(id=payload['id']).first()
+        try:
+            data = JSONParser().parse(request)
+            newPassword = data['password']
+        except:
+            raise ParseError('Incorrect Json entry!')
+        user.set_password(newPassword)
+        user.save()
+        return Response({'message': f'Update password for {user.email}'})
 
 @csrf_exempt
 def users_list(request):
