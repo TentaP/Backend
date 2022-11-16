@@ -1,0 +1,18 @@
+[
+    {
+         "model": "tentap.University",
+         "pk": 1,
+         "fields": {
+            "university_name": "LTU",
+            "courses": 2
+         }
+    },
+    {
+        "model": "tentap.Course",
+         "pk": 2,
+        "fields": {
+            "course_name": "M7011E",
+            "at_university": 1
+        }
+    }
+]

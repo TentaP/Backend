@@ -1,6 +1,7 @@
 import datetime
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.signals import user_logged_in
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
@@ -8,7 +9,17 @@ from rest_framework.views import APIView
 
 from tentap.serializers import UsersSerializer
 from tentap.permissions import *
+from tentap.models import UserSession
 
+def user_logged_in_handler(sender, request, user, **kwargs):
+    UserSession.objects.get_or_create(user = user, session_id = request.session.session_key)
+
+user_logged_in.connect(user_logged_in_handler)
+
+def delete_user_sessions(user):
+    user_sessions = UserSession.objects.filter(user = user)
+    for user_session in user_sessions:
+        user_session.session.delete()
 
 # https://www.youtube.com/watch?v=PUzgZrS_piQ&ab_channel=ScalableScripts
 # https://www.youtube.com/watch?v=yiYpFMk9QdA&t=355s&ab_channel=PrettyPrinted

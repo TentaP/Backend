@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from tentap.models import User, Course, File
+from tentap.models import User, Course, File, University
 
 
 # https://www.django-rest-framework.org/tutorial/1-serialization/
@@ -57,14 +57,26 @@ class CourseSerializer(serializers.ModelSerializer):
 # File
 class FileSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Course
-        fields = ['file_name', 'uploaded_by', 'course', 'at_university', 'date_of_uploading', 'reviews', 'file_type']
+        model = File
+        fields = ['file_name', 'uploaded_by', 'File', 'course', 'at_university', 'date_of_uploading', 'reviews', 'file_type']
 
     def create(self, validated_data):
         return Course.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
         instance.file_name = validated_data.get('file_name', instance.file_name)
-        instance.course = validated_data.get('course', instance.course_name)
+        instance.file = validated_data.get('file', instance.file)
+        return instance
+
+class UniversitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = University
+        fields = ['university_name']
+
+    def create(self, validated_data):
+        return University.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        instance.university_name = validated_data.get('university_name', instance.university_name)
         return instance
 
