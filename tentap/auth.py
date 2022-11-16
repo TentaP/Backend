@@ -20,112 +20,146 @@ class signup(APIView):
     def post(self, request):
         data = JSONParser().parse(request)
         payload = {
-            'username': str(data['username']).lower(),
-            'email': str(data['email']).lower(),
-            'password': data['password']
+            "username": str(data["username"]).lower(),
+            "email": str(data["email"]).lower(),
+            "password": data["password"]
         }
         if not email_validation(data['email']):
-            raise AuthenticationFailed('Wrong email format!')
+            raise {
+                "status_code": 500,
+                "detail": "wrong email format"
+            }
+
         serializer = UsersSerializer(data=payload)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        try:
+            serializer.save()
+        except:
+            raise {
+                "status_code": 500,
+                "detail": "an error occurred while saving in the database "
+            }
+
         hash_ = serializer.data['email'] + secret.SECRET_KEY
         msg = f"http://127.0.0.1:8000/api/verifection/{serializer.data['email']}/{encode_link(hash_)}"
-        send_mail('verify your email', msg, 'noubah-8@studnet.ltu.se', [str(serializer.data['email'])])
+        send_mail("verify your email", msg, "noubah-8@studnet.ltu.se", [str(serializer.data["email"])])
         print(msg)  # TODO remove this
-        return Response({"RESPONSE": "CREATED"}, status=201)
+        return Response(
+            {
+                "status_code": 201,
+                "detail": "account created successfully"
+            }
+        )
 
 
 class login(APIView):
 
     def post(self, request):
         data = JSONParser().parse(request)
-        if list(data.keys()) == ['username', 'password']:
+        if list(data.keys()) == ["username", "password"]:
             login_using_user_name = True
-        elif list(data.keys()) == ['email', 'password']:
+        elif list(data.keys()) == ["email", "password"]:
             login_using_user_name = False
         else:
-            raise AuthenticationFailed('Wrong input')
+            raise {"status_code": 500,
+                   "detail": "wrong entry, insert email or username"
+                   }
 
         user = None
-        password = data['password']
+        password = data["password"]
         if login_using_user_name:
-            username = str(data['username']).lower()
+            username = str(data["username"]).lower()
             user = User.objects.filter(username=username).first()
         elif not login_using_user_name:
-            email = str(data['email']).lower()
+            email = str(data["email"]).lower()
             user = User.objects.filter(email=email).first()
 
         if user is None:
-            raise AuthenticationFailed('user not found!')
+            raise NotFound("user not found!")
 
         if not user.is_active:
-            raise AuthenticationFailed('Your account is not active!')
+            raise MethodNotAllowed("your account is not active!")
 
         if not user.check_password(password):
-            raise AuthenticationFailed('Incorrect password!')
+            raise NotAcceptable("incorrect password!")
 
         payload = {
-            'id': user.id,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
-            'iat': datetime.datetime.utcnow()
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
+            "iat": datetime.datetime.utcnow()
         }
-        token = jwt.encode(payload, secret.SECRET_KEY, algorithm='HS256')
+        token = jwt.encode(payload, secret.SECRET_KEY, algorithm="HS256")
 
-        res = Response()
-        res.set_cookie(key='jwt', value=token, httponly=True)
-        res.data = {
-            'jwt': token
+        resp = Response()
+        resp.set_cookie(key="jwt", value=token, httponly=True)
+        resp.data = {
+            "status_code": 200,
+            "detail": "successfully logged in",
         }
-        return res
+        return resp
 
 
 class logout(APIView):
     permission_classes = [isNormalUser | isAdminUser | isSuperUser]
 
     def post(self, request):
-        token = request.COOKIES.get('jwt')
+        token = request.COOKIES.get("jwt")
         if not token:
-            raise AuthenticationFailed('Unauthenticated!')
-        res = Response()
-        res.delete_cookie('jwt')
-        res.data = {
-            'message': 'success'
+            raise NotAuthenticated("not authenticated!")
+        resp = Response()
+        resp.delete_cookie('jwt')
+        resp.data = {
+            "status_code": 200,
+            "detail": "successfully logged out"
         }
-        return res
+        return resp
 
 
+# TODO move this to a new view
 class userView(APIView):
     permission_classes = [isNormalUser | isAdminUser | isSuperUser]
 
     def get(self, request):
-        token = request.COOKIES.get('jwt')
+        token = request.COOKIES.get("jwt")
 
         if not token:
-            raise AuthenticationFailed('Unauthenticated!')
+            raise NotAuthenticated("not authenticated!")
 
         try:
-            payload = jwt.decode(token, secret.SECRET_KEY, algorithms='HS256')
+            payload = jwt.decode(token, secret.SECRET_KEY, algorithms="HS256")
         except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed('Unauthenticated!')
+            raise NotAuthenticated("not authenticated!")
 
-        user = User.objects.filter(id=payload['id']).first()
+        user = User.objects.filter(id=payload["id"]).first()
         serializer = UsersSerializer(user)
         return Response(serializer.data)
 
 
 class emailVerification(APIView):
-    def post(self, request, email: str, hash_: str):
+    def get(self, request, email: str, hash_: str):
         salted_email = email.lower() + secret.SECRET_KEY
         if hash_ == encode_link(salted_email):
             user = User.objects.filter(email=email.lower()).first()
             if user.is_active:
-                raise AuthenticationFailed('account is already active')
+                raise MethodNotAllowed("account is already active")
             user.is_active = True
-            user.save()
-            return Response({'message': 'account activated!'})
+            try:
+                user.save()
+            except:
+                raise {
+                    "status_code": 500,
+                    "detail": "an error occurred while saving in the database "
+                }
+            return Response(
+                {
+                    "status_code": 200,
+                    "detail": "account activated!"
+                }
+            )
         else:
-            return Response({'message': 'wrong activation link'})
+            raise NotFound('wrong reset link!')
 
 
 class setSuperUser(APIView):
@@ -136,13 +170,25 @@ class setSuperUser(APIView):
         username = data['username']
         user = User.objects.filter(username=username).first()
         if user is None:
-            raise AuthenticationFailed('user not found!')
+            raise NotFound('user not found!')
         if user.is_superuser:
-            raise AuthenticationFailed(f'{username} is already a super user')
+            raise NotAcceptable(f"{username} is already a super_user")
         user.is_superuser = True
         user.is_admin = True
-        user.save()
-        return Response({'message': f'{username} is superuser now!'})
+        try:
+            user.save()
+        except:
+            raise {
+                "status_code": 500,
+                "detail": "an error occurred while saving in the database "
+            }
+
+        return Response(
+            {
+                "status_code": 201,
+                "detail": f"{username} is superuser now!"
+            }
+        )
 
 
 class setAdmin(APIView):
@@ -150,15 +196,26 @@ class setAdmin(APIView):
 
     def put(self, request):
         data = JSONParser().parse(request)
-        username = data['username']
+        username = data["username"]
         user = User.objects.filter(username=username).first()
         if user is None:
-            raise AuthenticationFailed('user not found!')
+            raise NotFound("user not found!")
         if user.is_admin:
-            raise AuthenticationFailed(f'{username} is already an admin')
+            raise NotAcceptable(f"{username} is already an admin")
         user.is_admin = True
-        user.save()
-        return Response({'message': f'{username} is admin now!'})
+        try:
+            user.save()
+        except:
+            raise {
+                "status_code": 500,
+                "detail": "An Error occurred while saving in the database"
+            }
+        return Response(
+            {
+                "status_code": 201,
+                "detail": f"{username} is admin now!"
+            }
+        )
 
 
 class removeAdmin(APIView):
@@ -166,45 +223,71 @@ class removeAdmin(APIView):
 
     def put(self, request):
         data = JSONParser().parse(request)
-        username = data['username']
+        username = data["username"]
         user = User.objects.filter(username=username).first()
         if user is None:
-            raise AuthenticationFailed('user not found!')
+            raise NotFound("user not found!")
         if not user.is_admin:
-            raise AuthenticationFailed(f'{username} is not an admin')
+            raise NotAcceptable(f"{username} is not an admin")
         user.is_admin = False
-        user.save()
-        return Response({'message': f'{username} is removed as an admin now!'})
+        try:
+            user.save()
+        except:
+            raise {
+                "status_code": 500,
+                "detail": "an error occurred while saving in the database "
+            }
+        return Response(
+            {
+                "status_code": 200,
+                "detail": f"{username} is removed as an admin now!"
+            }
+        )
 
 
 class requestPasswordResetLink(APIView):
 
     def post(self, request):
         data = JSONParser().parse(request)
-        email = data['email']
+        email = data["email"]
         user = User.objects.filter(email=email).first()
 
         if user is None:
-            raise AuthenticationFailed('user not found!')
+            raise NotFound("user not found!")
 
         msg = f"http://127.0.0.1:8000/api/reset_password_link/{email}/{str(encode_link(email + secret.SECRET_KEY))}"
-        send_mail('reset your password', msg, 'noubah-8@studnet.ltu.se', [str(email)])
+        send_mail("reset your password", msg, "noubah-8@studnet.ltu.se", [str(email)])
         print(msg)
 
-        return Response({'message': f'An email has been sent to {email}'})
+        return Response(
+            {
+                "status_code": 200,
+                "detail": f"an email has been sent to {email}"
+            }
+        )
 
 
 class resetPasswordViaLink(APIView):
     def put(self, request, email: str, hash_: str):
         if not encode_link(email + secret.SECRET_KEY) == hash_:
-            raise AuthenticationFailed('wrong reset link!')
+            raise NotFound("wrong reset link!")
 
         data = JSONParser().parse(request)
         user = User.objects.filter(email=email).first()
-        user.set_password(data['password'])
-        user.save()
-
-        return Response({'message': f'Update password for {email}'})
+        user.set_password(data["password"])
+        try:
+            user.save()
+        except:
+            raise {
+                "status_code": 500,
+                "detail": "an error occurred while saving in the database"
+            }
+        return Response(
+            {
+                "status_code": 201,
+                "detail": f"password for {email} has been updated"
+            }
+        )
 
 
 class resetPassword(APIView):
@@ -214,23 +297,35 @@ class resetPassword(APIView):
         token = request.COOKIES.get('jwt')
 
         if not token:
-            raise AuthenticationFailed('Unauthenticated!')
+            raise NotAuthenticated('not authenticated!')
 
         try:
-            payload = jwt.decode(token, secret.SECRET_KEY, algorithms='HS256')
+            payload = jwt.decode(token, secret.SECRET_KEY, algorithms="HS256")
         except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed('Unauthenticated!')
+            raise NotAuthenticated('not authenticated!')
 
         print(payload)
-        user = User.objects.filter(id=payload['id']).first()
+        user = User.objects.filter(id=payload["id"]).first()
         try:
             data = JSONParser().parse(request)
-            newPassword = data['password']
+            newPassword = data["password"]
         except:
-            raise ParseError('Incorrect Json entry!')
+            raise ParseError("incorrect json entry!")
         user.set_password(newPassword)
-        user.save()
-        return Response({'message': f'Update password for {user.email}'})
+        try:
+            user.save()
+        except:
+            raise {
+                "status_code": 500,
+                "detail": "an error occurred while saving in the database "
+            }
+        return Response(
+            {
+                "status_code": 201,
+                "detail": f"password for {user.email} has been updated"
+            }
+        )
+
 
 @csrf_exempt
 def users_list(request):
