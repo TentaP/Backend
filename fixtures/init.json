@@ -1,0 +1,43 @@
+[
+    {
+         "model": "tentap.University",
+         "pk": 0,
+         "fields": {
+            "university_name": "LTU"
+         }
+    },
+    {
+         "model": "tentap.University",
+         "pk": 1,
+         "fields": {
+            "university_name": "KTH"
+         }
+    },
+    {
+        "model": "tentap.Course",
+        "pk": 0,
+        "fields": {
+            "course_name": "M7011E",
+            "university": 0, 
+            "description": "Dynamic websystems"
+        }
+    },
+    {
+        "model": "tentap.Course",
+        "pk": 2,
+        "fields": {
+            "course_name": "M011E",
+            "university": 0, 
+            "description": "Dynamic systems"
+        }
+    },
+    {
+        "model": "tentap.Course",
+        "pk": 1,
+        "fields": {
+            "course_name": "KTH100",
+            "university": 1, 
+            "description": "Dynamic KTH"
+        }
+    }
+]

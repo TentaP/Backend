@@ -1,0 +1,8 @@
+#!/bin/sh
+dropdb tentap
+createdb tentap
+rm tentap/migrations/000*
+python manage.py makemigrations
+python manage.py migrate
+python manage.py loaddata fixtures/*
+python manage.py runserver
