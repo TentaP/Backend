@@ -2,14 +2,9 @@ from django.db import models
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth.models import AbstractUser
-from django.contrib.sessions.models import Session
 
 
 # Create your models here.
-
-class UserSession(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    session = models.ForeignKey(Session, on_delete=models.CASCADE)
 
 class File(models.Model):
     # Types of files, subject to change.
@@ -59,6 +54,7 @@ class User(AbstractUser):
     is_admin = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     university = models.ForeignKey(University, related_name="Users", null=True, blank=True,  on_delete=models.PROTECT)
+    is_active = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = []

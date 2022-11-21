@@ -16,7 +16,7 @@ class isNormalUser(permissions.BasePermission):
 
     def has_permission(self, request, view):
         try:
-            if get_user(request):
+            if (not get_user(request).is_admin) and (not get_user(request).is_superuser):
                 return True
             return False
         except:
