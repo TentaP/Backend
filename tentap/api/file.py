@@ -18,7 +18,8 @@ class UploadFileForm(forms.Form):
     file = forms.FileField()
 
 @api_view(['POST', 'GET'])
-def file(request):
+@csrf_exempt
+def fileupload(request):
     if request.method == 'POST':
         file_data = JSONParser().parse(request)
         file_serializer = FileSerializer(data=file_data)

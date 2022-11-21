@@ -78,6 +78,7 @@ class logout(APIView):
 
     def post(self, request):
         token = request.COOKIES.get('jwt')
+        print("token = " +  token)
         if not token:
             raise AuthenticationFailed('Unauthenticated!')
         res = Response()
@@ -100,7 +101,7 @@ class userView(APIView):
         try:
             payload = jwt.decode(token, secret.SECRET_KEY, algorithms='HS256')
         except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed('Unauthenticated!')
+            raise AuthenticationFailed('Session Expired!')
 
         user = User.objects.filter(id=payload['id']).first()
         serializer = UsersSerializer(user)

@@ -43,22 +43,22 @@ class TokensSerializer(serializers.ModelSerializer):
 class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
-        fields = ['course_name', 'at_university', 'files']
+        fields = ['course_name', 'university', 'description']
 
     def create(self, validated_data):
         return Course.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
         instance.course_name = validated_data.get('course_name', instance.course_name)
-        instance.at_university = validated_data.get('at_university', instance.at_university)
-        instance.files = validated_data.get('files', instance.files)
+        instance.university = validated_data.get('university', instance.university)
+        instance.description = validated_data.get('description', instance.description)
         return instance
 
 # File
 class FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = File
-        fields = ['file_name', 'uploaded_by', 'File', 'course', 'at_university', 'date_of_uploading', 'reviews', 'file_type']
+        fields = ['file_name', 'uploaded_by', 'file', 'image', 'course', 'at_university', 'date_of_uploading', 'reviews', 'file_type']
 
     def create(self, validated_data):
         return Course.objects.create(**validated_data)
@@ -66,6 +66,7 @@ class FileSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         instance.file_name = validated_data.get('file_name', instance.file_name)
         instance.file = validated_data.get('file', instance.file)
+        instance.image = validated_data.get('image', instance.image)
         return instance
 
 class UniversitySerializer(serializers.ModelSerializer):
