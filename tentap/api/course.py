@@ -31,18 +31,23 @@ def course(request, pk):
         course.delete()
         return JsonResponse({'message': 'Course was deleted successfully!'}, status.HTTP_204_NO_CONTENT)
 
-@api_view(['GET', 'POST'])
-def courses(request):
-    courses = Course.objects.all()
-    if request.method == 'GET':
+
+class courses(APIView):
+    courseObjects = Course.objects
+    permission_classes = [isNormalUser | isAdminUser | isSuperUser]
+
+    def get(self, request):
+        user = get_user(request)
+        if isNormalUser(user):
+            courses = courseObjects.filter(user=user)
+        elif isAdminUser(user) or isSuperUser(user):
+            courses = courseObjects.all()
+        else:
+            return JsonResponse(status.HTTP_403_FORBIDDEN)
         course_serializer = CourseSerializer(courses, many=True)
         return JsonResponse(course_serializer.data, safe=False)
 
-    elif request.method == 'POST':
-        permission_classes = [isNormalUser | isAdminUser | isSuperUser]
-        token = request.COOKIES.get('jwt')
-        print(token)
-
+    def post(self, request):
         course_data = JSONParser().parse(request)
         course_serializer = CourseSerializer(data=course_data)
 

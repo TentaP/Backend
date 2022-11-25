@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.forms import ModelForm
 from tentap.models import User, Course, File, University
 
 
@@ -47,10 +48,15 @@ class CourseSerializer(serializers.ModelSerializer):
         return instance
 
 # File
+class FileForm(ModelForm):
+    class Meta:
+        model = File
+        fields = ['file_name', 'file',  'course', 'at_university', 'file_type']
+
 class FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = File
-        fields = ['file_name', 'uploaded_by', 'file', 'image', 'course', 'at_university', 'date_of_uploading', 'reviews', 'file_type']
+        fields = ['file_name', 'file',  'course', 'at_university', 'date_of_uploading', 'reviews', 'file_type']
 
     def create(self, validated_data):
         return Course.objects.create(**validated_data)

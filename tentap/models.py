@@ -12,7 +12,6 @@ class File(models.Model):
     uploaded_by = models.ForeignKey('User', related_name="Files",  on_delete=models.PROTECT)
 
     file = models.FileField(upload_to='documents/', blank=True, null=True)
-    image = models.ImageField(upload_to='documents/', blank=True, null=True)
 
     course = models.ForeignKey('Course', related_name="Files", on_delete=models.PROTECT)
     at_university = models.ForeignKey('University', related_name="Files", on_delete=models.PROTECT)    
