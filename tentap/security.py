@@ -1,5 +1,6 @@
 import hashlib
 import re
+import random
 
 
 def email_validation(email):
@@ -13,9 +14,8 @@ def email_validation(email):
 def encode_link(salted_email: str):
     return (hashlib.sha256(salted_email.encode())).hexdigest()
 
-# def create_salt():
-#     secrets.token_urlsafe(66)
-#     threading.Timer(10, create_salt).start()
-#
-#
-# print(create_salt())
+
+def get_random_hash():
+    return random.getrandbits(256)
+
+
