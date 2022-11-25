@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.forms import ModelForm
-from tentap.models import User, Course, File, University
+from tentap.models import User, Course, File, University, ActivationLink, PasswordResetLink
 
 
 # https://www.django-rest-framework.org/tutorial/1-serialization/
@@ -47,6 +47,7 @@ class CourseSerializer(serializers.ModelSerializer):
         instance.description = validated_data.get('description', instance.description)
         return instance
 
+
 # File
 class FileForm(ModelForm):
     class Meta:
@@ -56,7 +57,8 @@ class FileForm(ModelForm):
 class FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = File
-        fields = ['file_name', 'file',  'course', 'at_university', 'date_of_uploading', 'reviews', 'file_type']
+        fields = ['file_name', 'uploaded_by', 'file', 'image', 'course', 'at_university', 'date_of_uploading',
+                  'reviews', 'file_type']
 
     def create(self, validated_data):
         return Course.objects.create(**validated_data)
@@ -66,6 +68,7 @@ class FileSerializer(serializers.ModelSerializer):
         instance.file = validated_data.get('file', instance.file)
         instance.image = validated_data.get('image', instance.image)
         return instance
+
 
 class UniversitySerializer(serializers.ModelSerializer):
     class Meta:
@@ -79,3 +82,20 @@ class UniversitySerializer(serializers.ModelSerializer):
         instance.university_name = validated_data.get('university_name', instance.university_name)
         return instance
 
+
+class ActivationLinkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActivationLink
+        fields = ['user', 'expiry_data', 'hash']
+
+    def create(self, validated_data):
+        return ActivationLink.objects.create(**validated_data)
+
+
+class PasswordResetLinkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PasswordResetLink
+        fields = ['user', 'expiry_data', 'hash']
+
+    def create(self, validated_data):
+        return PasswordResetLink.objects.create(**validated_data)

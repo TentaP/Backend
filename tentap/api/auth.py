@@ -1,4 +1,5 @@
-import datetime
+from datetime import datetime, timedelta
+from django.utils import timezone
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.exceptions import *
@@ -6,9 +7,10 @@ from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from tentap.serializers import UsersSerializer
+from tentap.models import ActivationLink, PasswordResetLink
+from tentap.serializers import UsersSerializer, ActivationLinkSerializer, PasswordResetLinkSerializer
 from tentap.permissions import *
-from tentap.security import encode_link, email_validation
+from tentap.security import email_validation, get_random_hash
 from django.core.mail import send_mail
 
 
@@ -25,31 +27,25 @@ class signup(APIView):
             "password": data["password"]
         }
         if not email_validation(data['email']):
-            raise {
-                "status_code": 500,
-                "detail": "wrong email format"
-            }
+            raise NotAcceptable("wrong email format")
 
-        serializer = UsersSerializer(data=payload)
-        serializer.is_valid(raise_exception=True)
-        try:
-            serializer.save()
-        except:
-            raise {
-                "status_code": 500,
-                "detail": "an error occurred while saving in the database "
-            }
+        user_serializer = UsersSerializer(data=payload)
+        user_serializer.is_valid(raise_exception=True)
+        user_serializer.save()
 
-        hash_ = serializer.data['email'] + secret.SECRET_KEY
-        msg = f"http://127.0.0.1:8000/api/verifection/{serializer.data['email']}/{encode_link(hash_)}"
-        send_mail("verify your email", msg, "noubah-8@studnet.ltu.se", [str(serializer.data["email"])])
+        hash_ = get_random_hash()
+        msg = f"http://127.0.0.1:8000/api/verifection/{user_serializer.data['email']}/{hash_}"
+        activation_link_payload = {
+            "user": user_serializer.data['id'],
+            "hash": hash_,
+            "expiry_data": timezone.now() + timedelta(minutes=3)  # TODO change this (hours=24)
+        }
+        activationLink_serializer = ActivationLinkSerializer(data=activation_link_payload)
+        activationLink_serializer.is_valid(raise_exception=True)
+        activationLink_serializer.save()
+        send_mail("verify your email", msg, "noubah-8@studnet.ltu.se", [str(user_serializer.data["email"])])
         print(msg)  # TODO remove this
-        return Response(
-            {
-                "status_code": 201,
-                "detail": "account created successfully"
-            }
-        )
+        return Response({"detail": "account created successfully"}, status=201)
 
 
 class login(APIView):
@@ -61,9 +57,7 @@ class login(APIView):
         elif list(data.keys()) == ["email", "password"]:
             login_using_user_name = False
         else:
-            raise {"status_code": 500,
-                   "detail": "wrong entry, insert email or username"
-                   }
+            raise NotAcceptable("wrong entry, insert email or username")
 
         user = None
         password = data["password"]
@@ -87,17 +81,17 @@ class login(APIView):
             "id": user.id,
             "username": user.username,
             "email": user.email,
-            "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
-            "iat": datetime.datetime.utcnow()
+            "exp": datetime.utcnow() + timedelta(minutes=60),
+            "iat": datetime.utcnow()
         }
         token = jwt.encode(payload, secret.SECRET_KEY, algorithm="HS256")
 
         resp = Response()
         resp.set_cookie(key="jwt", value=token, httponly=True)
         resp.data = {
-            "status_code": 200,
             "detail": "successfully logged in",
         }
+        resp.status_code = 200
         return resp
 
 
@@ -111,9 +105,9 @@ class logout(APIView):
         resp = Response()
         resp.delete_cookie('jwt')
         resp.data = {
-            "status_code": 200,
             "detail": "successfully logged out"
         }
+        resp.status_code = 200
         return resp
 
 
@@ -139,27 +133,23 @@ class userView(APIView):
 
 class emailVerification(APIView):
     def get(self, request, email: str, hash_: str):
-        salted_email = email.lower() + secret.SECRET_KEY
-        if hash_ == encode_link(salted_email):
-            user = User.objects.filter(email=email.lower()).first()
-            if user.is_active:
-                raise MethodNotAllowed("account is already active")
+        user = User.objects.filter(email=email.lower()).first()
+        if not user:
+            return Response({"detail": ""}, status=500)  # TODO
+
+        if user.is_active:
+            return Response({"detail": "account is already active!"}, status=500)
+
+        activation_link = ActivationLink.objects.filter(user_id=user.id).first()
+        if hash_ == activation_link.hash and timezone.now() <= activation_link.expiry_data:
             user.is_active = True
-            try:
-                user.save()
-            except:
-                raise {
-                    "status_code": 500,
-                    "detail": "an error occurred while saving in the database "
-                }
-            return Response(
-                {
-                    "status_code": 200,
-                    "detail": "account activated!"
-                }
-            )
-        else:
-            raise NotFound('wrong reset link!')
+            user.save()
+            activation_link.delete()
+            return Response({"detail": "account activated!"}, status=200)
+        elif hash_ != activation_link.hash:
+            return Response({"detail": "wrong activation link!"}, status=500)
+        elif timezone.now() > activation_link.expiry_data:
+            return Response({"detail": "activation link is expired!"}, status=500)
 
 
 class setSuperUser(APIView):
@@ -177,18 +167,13 @@ class setSuperUser(APIView):
         user.is_admin = True
         try:
             user.save()
-        except:
+        except Exception:
             raise {
                 "status_code": 500,
                 "detail": "an error occurred while saving in the database "
             }
 
-        return Response(
-            {
-                "status_code": 201,
-                "detail": f"{username} is superuser now!"
-            }
-        )
+        return Response({"detail": f"{username} is superuser now!"}, status=201)
 
 
 class setAdmin(APIView):
@@ -205,17 +190,12 @@ class setAdmin(APIView):
         user.is_admin = True
         try:
             user.save()
-        except:
+        except Exception:
             raise {
                 "status_code": 500,
                 "detail": "An Error occurred while saving in the database"
             }
-        return Response(
-            {
-                "status_code": 201,
-                "detail": f"{username} is admin now!"
-            }
-        )
+        return Response({"detail": f"{username} is admin now!"}, status=201)
 
 
 class removeAdmin(APIView):
@@ -232,17 +212,12 @@ class removeAdmin(APIView):
         user.is_admin = False
         try:
             user.save()
-        except:
+        except Exception:
             raise {
                 "status_code": 500,
                 "detail": "an error occurred while saving in the database "
             }
-        return Response(
-            {
-                "status_code": 200,
-                "detail": f"{username} is removed as an admin now!"
-            }
-        )
+        return Response({"detail": f"{username} is removed as an admin now!"}, status=200)
 
 
 class requestPasswordResetLink(APIView):
@@ -255,39 +230,44 @@ class requestPasswordResetLink(APIView):
         if user is None:
             raise NotFound("user not found!")
 
-        msg = f"http://127.0.0.1:8000/api/reset_password_link/{email}/{str(encode_link(email + secret.SECRET_KEY))}"
+        hash_ = get_random_hash()
+        msg = f"http://127.0.0.1:8000/api/reset_password_link/{email}/{hash_}"
+        print(user.id)
+        password_reset_link_payload = {
+            "user": user.id,
+            "hash": hash_,
+            "expiry_data": timezone.now() + timedelta(minutes=3)  # TODO change this (hours=24)
+        }
+        password_reset_link_serializer = PasswordResetLinkSerializer(data=password_reset_link_payload)
+        password_reset_link_serializer.is_valid(raise_exception=True)
+        password_reset_link_serializer.save()
         send_mail("reset your password", msg, "noubah-8@studnet.ltu.se", [str(email)])
         print(msg)
 
-        return Response(
-            {
-                "status_code": 200,
-                "detail": f"an email has been sent to {email}"
-            }
-        )
+        return Response({"detail": f"an email has been sent to {email}"}, status=200)
 
 
 class resetPasswordViaLink(APIView):
     def put(self, request, email: str, hash_: str):
-        if not encode_link(email + secret.SECRET_KEY) == hash_:
-            raise NotFound("wrong reset link!")
+        user = User.objects.filter(email=email.lower()).first()
+        if not user:
+            return Response({"detail": ""}, status=500)  # TODO
 
-        data = JSONParser().parse(request)
-        user = User.objects.filter(email=email).first()
-        user.set_password(data["password"])
-        try:
+        reset_link = PasswordResetLink.objects.filter(user_id=user.id).first()
+        if not reset_link:
+            return Response({"detail": ""}, status=500)  # TODO
+
+        if hash_ == reset_link.hash and timezone.now() <= reset_link.expiry_data:
+            data = JSONParser().parse(request)
+            user.set_password(data["password"])
             user.save()
-        except:
-            raise {
-                "status_code": 500,
-                "detail": "an error occurred while saving in the database"
-            }
-        return Response(
-            {
-                "status_code": 201,
-                "detail": f"password for {email} has been updated"
-            }
-        )
+            reset_link.delete()
+            return Response({"detail": f"password for {email} has been updated"}, status=201)
+
+        elif hash_ != reset_link.hash:
+            return Response({"detail": "wrong reset link!"}, status=500)
+        elif timezone.now() > reset_link.expiry_data:
+            return Response({"detail": "reset link is expired!"}, status=500)
 
 
 class resetPassword(APIView):
@@ -309,22 +289,17 @@ class resetPassword(APIView):
         try:
             data = JSONParser().parse(request)
             newPassword = data["password"]
-        except:
+        except Exception:
             raise ParseError("incorrect json entry!")
         user.set_password(newPassword)
         try:
             user.save()
-        except:
+        except Exception:
             raise {
                 "status_code": 500,
                 "detail": "an error occurred while saving in the database "
             }
-        return Response(
-            {
-                "status_code": 201,
-                "detail": f"password for {user.email} has been updated"
-            }
-        )
+        return Response({"detail": f"password for {user.email} has been updated"}, status=201)
 
 
 @csrf_exempt
