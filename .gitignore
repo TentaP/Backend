@@ -175,10 +175,6 @@ cython_debug/
 
 # End of https://www.toptal.com/developers/gitignore/api/django
 
-.idea/Backend.iml
-Pipfile
-Pipfile
-Pipfile.lock
 tentap/migrations/0004_users_is_admin_users_is_super_user.py
 tentap/migrations/0003_initial.py
 tentap/migrations/0002_delete_users.py

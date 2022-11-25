@@ -64,3 +64,16 @@ class User(AbstractUser):
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = []
+
+
+class ActivationLink(models.Model):
+    user = models.ForeignKey('User', related_name='ActivationLink', on_delete=models.PROTECT)
+    expiry_data = models.DateTimeField(null=True)
+    hash = models.CharField(max_length=256)
+
+
+class PasswordResetLink(models.Model):
+    user = models.ForeignKey('User', related_name='PasswordResetLink', on_delete=models.PROTECT)
+    expiry_data = models.DateTimeField(null=True)
+    hash = models.CharField(max_length=256)
+
