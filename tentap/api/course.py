@@ -18,6 +18,7 @@ from tentap.permissions import *
 # TODO: Fix DELETE, issue: ForeignKey delete policy
 class course(APIView):
     permission_classes = [isNormalUser |isAdminUser | isSuperUser]
+    print("test")
 
     """
     Get course by pk
@@ -25,7 +26,6 @@ class course(APIView):
     def get(self, request, pk):
         try:
             course = Course.objects.get(pk=pk)
-            return Response({})
         except Course.DoesNotExist:
             return JsonResponse({'detail': 'The course does not exist'}, status=status.HTTP_404_NOT_FOUND) 
         course_serializer = CourseSerializer(course)
