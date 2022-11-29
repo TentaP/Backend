@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.forms import ModelForm
-from tentap.models import User, Course, File, University, ActivationLink, PasswordResetLink
+from tentap.models import User, Course, File, University, ActivationLink, PasswordResetLink, Review, Comment
 
 
 # https://www.django-rest-framework.org/tutorial/1-serialization/
@@ -8,7 +8,7 @@ from tentap.models import User, Course, File, University, ActivationLink, Passwo
 class UsersSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'password', 'is_admin', 'is_superuser', 'is_active']
+        fields = ['id', 'username', 'email','university', 'password', 'is_admin', 'is_superuser', 'is_active']
         extra_kwargs = {
             'password': {'write_only': True}
         }
@@ -35,6 +35,8 @@ class UsersSerializer(serializers.ModelSerializer):
 # Course
 class CourseSerializer(serializers.ModelSerializer):
     class Meta:
+        use_natural_foreign_keys = True
+        use_natural_primary_keys = True
         model = Course
         fields = ['course_name', 'university', 'description']
 
@@ -49,29 +51,25 @@ class CourseSerializer(serializers.ModelSerializer):
 
 
 # File
-class FileForm(ModelForm):
-    class Meta:
-        model = File
-        fields = ['file_name', 'file',  'course', 'at_university', 'file_type']
-
 class FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = File
-        fields = ['file_name', 'uploaded_by', 'file', 'image', 'course', 'at_university', 'date_of_uploading',
+        fields = ['filename', 'uploaded_by', 'file', 'course', 'at_university', 'date_of_uploading',
                   'reviews', 'file_type']
 
     def create(self, validated_data):
-        return Course.objects.create(**validated_data)
+        return File.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
-        instance.file_name = validated_data.get('file_name', instance.file_name)
-        instance.file = validated_data.get('file', instance.file)
-        instance.image = validated_data.get('image', instance.image)
+        instance.filename = validated_data.get('filename', instance.filename)
+        instance.file_type = validated_data.get('file_type', instance.file)
         return instance
 
 
 class UniversitySerializer(serializers.ModelSerializer):
     class Meta:
+        use_natural_foreign_keys = True
+        use_natural_primary_keys = True
         model = University
         fields = ['university_name']
 
@@ -99,3 +97,34 @@ class PasswordResetLinkSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         return PasswordResetLink.objects.create(**validated_data)
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ['author', 'review', 'body']
+
+    def create(self, validated_data):
+        return Review.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        instance.review = validated_data.get('review', instance.review)
+        instance.body = validated_data.get('body', instance.body)
+        return instance
+
+"""
+TODO: edited comment has a edited date
+"""
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ['author', 'comment']
+
+    def create(self, validated_data):
+        return Comment.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        instance.comment = validated_data.get('comment', instance.comment)
+        return instance
+
+
