@@ -16,10 +16,12 @@ class isNormalUser(permissions.BasePermission):
 
     def has_permission(self, request, view):
         try:
+            print("isNormalUser")
             if (not get_user(request).is_admin) and (not get_user(request).is_superuser):
                 return True
             return False
-        except:
+        except Exception as e:
+            print(e)
             return False
 
 
