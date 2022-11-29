@@ -54,7 +54,7 @@ class login(APIView):
         token = request.COOKIES.get("jwt")
         data = JSONParser().parse(request)
         if token:
-            return Response({"detail": "already logged in"}, status=200)  # TODO
+            return Response({"detail": "already logged in"}, status=200)
 
         if list(data.keys()) == ["username", "password"]:
             login_using_user_name = True
