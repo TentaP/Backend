@@ -28,11 +28,12 @@
         "is_staff": false,
         "is_active": true,
         "date_joined": "2022-11-16T18:30:08.621Z",
-        "username": "user",
-        "email": "user",
+        "username": "testltu",
+        "email": "testltu@test.com",
         "password": "pbkdf2_sha256$390000$a5a9BqmXNuG3p67CMjfRIz$6xUv4YFS0d8anU+kNNui3Ttf3/o+t+CvZSBvvNkaiWk=",
         "is_admin": false,
         "is_superuser": false,
+        "university": 0,
         "groups": [],
         "user_permissions": []
     }
@@ -48,7 +49,7 @@
         "is_active": true,
         "date_joined": "2022-11-17T14:30:25.458Z",
         "username": "testkth",
-        "email": "testkth",
+        "email": "testkth@test.com",
         "password": "pbkdf2_sha256$390000$3ifvzNw5o6cUIEBVn15Uhb$sVgLokgUPQv8ztsNGTyJ/CY0xEWNTKVCMRo95Or4XAs=",
         "is_admin": false,
         "is_superuser": false,

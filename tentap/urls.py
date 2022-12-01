@@ -1,7 +1,7 @@
 from django.urls import path
 
 from . import views
-from .api import auth, course, file, university
+from .api import auth, course, file, university, review, comment
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -15,12 +15,27 @@ urlpatterns = [
     path('api/request_password_reset_link', auth.requestPasswordResetLink.as_view()),
     path('api/reset_password_link/<str:email>/<str:hash_>', auth.resetPasswordViaLink.as_view()),
     path('api/reset_password', auth.resetPassword.as_view()),
+    #User
     path('api/user', auth.userView.as_view()),
     path('api/users/<int:pk>', auth.user_details),
-    path('api/course/', course.courses),
-    path('api/course/<int:pk>', course.course),
-    path('api/file/', file.fileupload),
-    path('api/file/<int:pk>', file.file),
-    path('api/uni/', university.university),
-    path('api/uni/<int:pk>', university.universitypk.as_view())
+    path('api/user/files', file.filesByUser.as_view()),
+    #Course/s
+    path('api/courses', course.courses.as_view()),
+    path('api/course/<int:pk>/', course.coursePk.as_view()),
+    path('api/course/<int:pk>/files', file.filesByCourse.as_view()),
+    path('api/course/<int:pk>/reviews', review.ReviewListByCourse.as_view()),
+    #File
+    path('api/file', file.fileUpload.as_view()),
+    path('api/file/<int:pk>', file.filePk.as_view()),
+    path('api/file/<int:pk>/reviews', review.ReviewListByFile.as_view()),
+    path('api/file/<int:pk>/comments', comment.CommentListByFile.as_view()),
+    #University
+    path('api/uni', university.university),
+    path('api/uni/<int:pk>', university.universitypk.as_view()),
+    #Review/s
+    path('api/review/course/<int:course_pk>', review.ReviewItem.as_view()),
+    path('api/review/file/<int:file_pk>', review.ReviewItem.as_view()),
+    path('api/review/<int:pk>', review.ReviewPk.as_view()),
+    #Comment
+    path('api/comment/<int:pk>', comment.Comment.as_view()),
 ]
