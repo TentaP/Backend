@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 from tentap.managers import CourseManager, UniversityManager
 
@@ -20,7 +21,6 @@ class File(models.Model):
     course = models.ForeignKey('Course', related_name="Files", on_delete=models.PROTECT)
     at_university = models.ForeignKey('University', related_name="Files", on_delete=models.PROTECT)
     date_of_uploading = models.DateTimeField(auto_now=True)
-    reviews = models.ForeignKey('Review', related_name='File', on_delete=models.CASCADE, blank=True, null=True)
 
     comments = models.ForeignKey('Comment', related_name='File', on_delete=models.CASCADE, blank=True, null=True)
 
@@ -48,7 +48,7 @@ class University(models.Model):
 
 class Course(models.Model):
     course_name = models.CharField(max_length=200, unique=True)
-    university = models.ForeignKey(University, related_name='Courses', on_delete=models.PROTECT)
+    university = models.ForeignKey(University, related_name='courses', on_delete=models.PROTECT)
     description = models.CharField(max_length=700)
 
     objects = CourseManager()
@@ -58,13 +58,18 @@ class Course(models.Model):
 
 
 class Comment(models.Model):
-    comment = models.CharField(max_length=700)
     author = models.ForeignKey('User', related_name='Comments', on_delete=models.PROTECT)
+    file = models.ForeignKey('File', related_name='Comments', on_delete=models.PROTECT, blank=True, null=True)
+
+    comment = models.CharField(max_length=700)
 
 
 class Review(models.Model):
     author = models.ForeignKey('User', related_name='Reviews', on_delete=models.PROTECT)
-    review = models.DecimalField(decimal_places=1, max_digits=1)
+    course = models.ForeignKey('Course', related_name='Reviews', on_delete=models.PROTECT, blank=True, null=True)
+    file = models.ForeignKey('File', related_name='Reviews', on_delete=models.PROTECT, blank=True, null=True)
+
+    review = models.DecimalField(decimal_places=1, max_digits=2, validators=[MinValueValidator(0), MaxValueValidator(1)])
     body = models.CharField(max_length=700)
 
 

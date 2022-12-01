@@ -21,18 +21,21 @@ urlpatterns = [
     path('api/user/files', file.filesByUser.as_view()),
     #Course/s
     path('api/courses', course.courses.as_view()),
-    path('api/course/<int:pk>/', course.course.as_view()),
+    path('api/course/<int:pk>/', course.coursePk.as_view()),
     path('api/course/<int:pk>/files', file.filesByCourse.as_view()),
     path('api/course/<int:pk>/reviews', review.ReviewListByCourse.as_view()),
     #File
     path('api/file', file.fileUpload.as_view()),
+    path('api/file/<int:pk>', file.filePk.as_view()),
     path('api/file/<int:pk>/reviews', review.ReviewListByFile.as_view()),
-    path('api/file/<int:pk>/comment', comment.CommentListByFile.as_view()),
+    path('api/file/<int:pk>/comments', comment.CommentListByFile.as_view()),
     #University
     path('api/uni', university.university),
     path('api/uni/<int:pk>', university.universitypk.as_view()),
-    #Review
-    path('api/review/<int:pk>', review.Review.as_view()),
+    #Review/s
+    path('api/review/course/<int:course_pk>', review.ReviewItem.as_view()),
+    path('api/review/file/<int:file_pk>', review.ReviewItem.as_view()),
+    path('api/review/<int:pk>', review.ReviewPk.as_view()),
     #Comment
     path('api/comment/<int:pk>', comment.Comment.as_view()),
 ]

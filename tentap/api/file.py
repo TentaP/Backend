@@ -18,14 +18,13 @@ post request for the File model
 """
 class fileUpload(APIView):
     permission_classes = [isNormalUser | isAdminUser | isSuperUser]
-    parser_classes = [MultiPartParser]
+    parser_classes = (MultiPartParser, )
     serializer_class = FileSerializer
 
     def post(self, request):
         user = get_user(request)
-        #post = JSONParser().parse(request.POST)
         request.data['uploaded_by'] = user.pk
-        request.data['at_university'] = int(request.data['at_university'])
+        request.data['at_university'] = user.university.pk
         request.data['course'] = int(request.data['course'])
         serializer = self.serializer_class(data=request.data)
         #file_serializer = FileSerializer(data=file_data)
@@ -36,7 +35,7 @@ class fileUpload(APIView):
         return JsonResponse(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
 
-class filepk(APIView):
+class filePk(APIView):
     permission_classes = [isNormalUser | isAdminUser | isSuperUser]
 
     def get(self, request, pk):
@@ -74,7 +73,7 @@ class filepk(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 class filesByCourse(APIView):
-    permissions_classes = [isNormalUser, isAdminUser, isSuperUser]
+    permissions_classes = [isNormalUser | isAdminUser | isSuperUser]
 
     def get(self, request, course):
         try:
@@ -86,14 +85,15 @@ class filesByCourse(APIView):
             return JsonResponse(status=status.HTTP_404_NOT_FOUND)
 
 class filesByUser(APIView):
-    permissions_classes = [isNormalUser, isAdminUser, isSuperUser]
+    permissions_classes = [isNormalUser | isAdminUser | isSuperUser]
+    serializer_class = FileSerializer
 
     def get(self, request):
         try:
             user = get_user(request)
             try:
                 files = user.Reviews.all()
-                file_serializer = FileSerializer(files, many=True)
+                serializer = self.serializer_class(files, many=True)
                 return JsonResponse(file_serializer.data, safe=False)
             except File.DoesNotExist:
                 return JsonResponse(status=status.HTTP_404_NOT_FOUND)

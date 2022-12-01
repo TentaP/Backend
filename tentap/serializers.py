@@ -38,7 +38,7 @@ class CourseSerializer(serializers.ModelSerializer):
         use_natural_foreign_keys = True
         use_natural_primary_keys = True
         model = Course
-        fields = ['course_name', 'university', 'description']
+        fields = ['id', 'course_name', 'university', 'description']
 
     def create(self, validated_data):
         return Course.objects.create(**validated_data)
@@ -55,7 +55,7 @@ class FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = File
         fields = ['filename', 'uploaded_by', 'file', 'course', 'at_university', 'date_of_uploading',
-                  'reviews', 'file_type']
+                   'file_type']
 
     def create(self, validated_data):
         return File.objects.create(**validated_data)
@@ -102,7 +102,7 @@ class PasswordResetLinkSerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
-        fields = ['author', 'review', 'body']
+        fields = ['id', 'author', 'review', 'body', 'course', 'file']
 
     def create(self, validated_data):
         return Review.objects.create(**validated_data)
@@ -118,7 +118,7 @@ TODO: edited comment has a edited date
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ['author', 'comment']
+        fields = ['id', 'author', 'comment', 'file']
 
     def create(self, validated_data):
         return Comment.objects.create(**validated_data)
