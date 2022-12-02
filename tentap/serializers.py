@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from tentap.models import User, Course, File, University, ActivationLink, PasswordResetLink
+from tentap.models import User, Course, File, University, ActivationLink, PasswordResetToken
 
 
 # https://www.django-rest-framework.org/tutorial/1-serialization/
@@ -87,10 +87,10 @@ class ActivationLinkSerializer(serializers.ModelSerializer):
         return ActivationLink.objects.create(**validated_data)
 
 
-class PasswordResetLinkSerializer(serializers.ModelSerializer):
+class PasswordResetTokenSerializer(serializers.ModelSerializer):
     class Meta:
-        model = PasswordResetLink
+        model = PasswordResetToken
         fields = ['user', 'expiry_data', 'hash']
 
     def create(self, validated_data):
-        return PasswordResetLink.objects.create(**validated_data)
+        return PasswordResetToken.objects.create(**validated_data)
