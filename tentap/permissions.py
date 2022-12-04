@@ -6,9 +6,9 @@ from tentap.models import User
 
 
 def get_user(request):
-    token = request.COOKIES.get('jwt')
+    token = request.headers.get("Authorization")[7:]
     payload = jwt.decode(token, secret.SECRET_KEY, algorithms='HS256')
-    user = User.objects.filter(id=payload['id']).first()
+    user = User.objects.filter(id=payload['user_id']).first()
     return user
 
 

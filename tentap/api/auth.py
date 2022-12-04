@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta
+
+import jwt
 from django.utils import timezone
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -6,9 +8,10 @@ from rest_framework.exceptions import *
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 
-from tentap.models import ActivationLink, PasswordResetLink
-from tentap.serializers import UsersSerializer, ActivationLinkSerializer, PasswordResetLinkSerializer
+from tentap.models import ActivationLink, PasswordResetToken
+from tentap.serializers import UsersSerializer, ActivationLinkSerializer, PasswordResetTokenSerializer
 from tentap.permissions import *
 from tentap.security import email_validation, get_random_hash
 from django.core.mail import send_mail
@@ -51,10 +54,7 @@ class signup(APIView):
 class login(APIView):
 
     def post(self, request):
-        token = request.COOKIES.get("jwt")
         data = JSONParser().parse(request)
-        if token:
-            return Response({"detail": "already logged in"}, status=200)
 
         if list(data.keys()) == ["username", "password"]:
             login_using_user_name = True
@@ -81,21 +81,25 @@ class login(APIView):
         if not user.check_password(password):
             raise NotAcceptable("incorrect password!")
 
-        payload = {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "exp": datetime.utcnow() + timedelta(minutes=60),
-            "iat": datetime.utcnow()
-        }
-        token = jwt.encode(payload, secret.SECRET_KEY, algorithm="HS256")
+        refresh = RefreshToken.for_user(user)
 
+        # payload = {
+        #     "id": user.id,
+        #     "username": user.username,
+        #     "email": user.email,
+        #     "exp": datetime.utcnow() + timedelta(minutes=60),
+        #     "iat": datetime.utcnow()
+        # }
+        # token = jwt.encode(payload, secret.SECRET_KEY, algorithm="HS256")
+        #
         resp = Response()
-        resp.set_cookie(key="jwt", value=token, httponly=True)
+        # resp.set_cookie(key="Bearer ", value=refresh.access_token, httponly=True)
         resp.data = {
-            "detail": "successfully logged in",
+            'detail': "successfully logged in",
+            'access': str(refresh.access_token),
         }
         resp.status_code = 200
+        print(jwt.decode(str(refresh.access_token), secret.SECRET_KEY, algorithms='HS256'))
         return resp
 
 
@@ -103,7 +107,7 @@ class logout(APIView):
     permission_classes = [isNormalUser | isAdminUser | isSuperUser]
 
     def post(self, request):
-        token = request.COOKIES.get("jwt")
+        token = request.headers.get("Authorization")[7:]
         if not token:
             raise NotAuthenticated("not authenticated!")
         resp = Response()
@@ -120,7 +124,7 @@ class userView(APIView):
     permission_classes = [isNormalUser | isAdminUser | isSuperUser]
 
     def get(self, request):
-        token = request.COOKIES.get("jwt")
+        token = request.headers.get("Authorization")[7:]
 
         if not token:
             raise NotAuthenticated("not authenticated!")
@@ -130,7 +134,7 @@ class userView(APIView):
         except jwt.ExpiredSignatureError:
             raise NotAuthenticated("not authenticated!")
 
-        user = User.objects.filter(id=payload["id"]).first()
+        user = User.objects.filter(id=payload["user_id"]).first()
         serializer = UsersSerializer(user)
         return Response(serializer.data)
 
@@ -224,7 +228,7 @@ class removeAdmin(APIView):
         return Response({"detail": f"{username} is removed as an admin now!"}, status=200)
 
 
-class requestPasswordResetLink(APIView):
+class requestPasswordResetToken(APIView):
 
     def post(self, request):
         data = JSONParser().parse(request)
@@ -234,51 +238,63 @@ class requestPasswordResetLink(APIView):
         if user is None:
             raise NotFound("user not found!")
 
+        # update the hash if it is already in the db
+        passwordResetToken = PasswordResetToken.objects.filter(user_id=user.id).first()
         hash_ = get_random_hash()
-        msg = f"http://127.0.0.1:8000/api/reset_password_link/{email}/{hash_}"
+        if passwordResetToken:
+            passwordResetToken.hash = hash_
+            passwordResetToken.save()
+            send_mail("reset your password with this token", str(hash_), "noubah-8@studnet.ltu.se", [str(email)])
+            print(hash_)
+            return Response({"detail": f"an email has been sent to {email}"}, status=200)
+
         print(user.id)
         password_reset_link_payload = {
             "user": user.id,
-            "hash": hash_,
-            "expiry_data": timezone.now() + timedelta(minutes=3)  # TODO change this (hours=24)
+            "hash": str(hash_),
+            "expiry_data": timezone.now() + timedelta(minutes=60)  # TODO change this (hours=24)
         }
-        password_reset_link_serializer = PasswordResetLinkSerializer(data=password_reset_link_payload)
+        password_reset_link_serializer = PasswordResetTokenSerializer(data=password_reset_link_payload)
         password_reset_link_serializer.is_valid(raise_exception=True)
         password_reset_link_serializer.save()
-        send_mail("reset your password", msg, "noubah-8@studnet.ltu.se", [str(email)])
-        print(msg)
+        send_mail("reset your password with this token", str(hash_), "noubah-8@studnet.ltu.se", [str(email)])
+        print(hash_)
 
         return Response({"detail": f"an email has been sent to {email}"}, status=200)
 
 
-class resetPasswordViaLink(APIView):
-    def put(self, request, email: str, hash_: str):
+class resetPasswordViaToken(APIView):
+    def put(self, request):
+        data = JSONParser().parse(request)
+        email = data["email"]
+        token = data["token"]
+        password = data["password"]
+
         user = User.objects.filter(email=email.lower()).first()
         if not user:
-            return Response({"detail": ""}, status=500)  # TODO
+            return Response({"detail": "email not found!"}, status=500)  # TODO
 
-        reset_link = PasswordResetLink.objects.filter(user_id=user.id).first()
-        if not reset_link:
-            return Response({"detail": ""}, status=500)  # TODO
+        reset_token = PasswordResetToken.objects.filter(user_id=user.id).first()
+        if not reset_token:
+            return Response({"detail": "Token not found!"}, status=500)  # TODO
 
-        if hash_ == reset_link.hash and timezone.now() <= reset_link.expiry_data:
-            data = JSONParser().parse(request)
-            user.set_password(data["password"])
+        if token == reset_token.hash and timezone.now() <= reset_token.expiry_data:
+            user.set_password(password)
             user.save()
-            reset_link.delete()
+            reset_token.delete()
             return Response({"detail": f"password for {email} has been updated"}, status=201)
 
-        elif hash_ != reset_link.hash:
-            return Response({"detail": "wrong reset link!"}, status=500)
-        elif timezone.now() > reset_link.expiry_data:
-            return Response({"detail": "reset link is expired!"}, status=500)
+        elif token != reset_token.hash:
+            return Response({"detail": "wrong reset token!"}, status=500)
+        elif timezone.now() > reset_token.expiry_data:
+            return Response({"detail": "reset token is expired!"}, status=500)
 
 
 class resetPassword(APIView):
     permission_classes = [isNormalUser | isAdminUser | isSuperUser]
 
     def put(self, request):
-        token = request.COOKIES.get('jwt')
+        token = request.headers.get("Authorization")[7:]
 
         if not token:
             raise NotAuthenticated('not authenticated!')
@@ -288,8 +304,7 @@ class resetPassword(APIView):
         except jwt.ExpiredSignatureError:
             raise AuthenticationFailed('session expired!')
 
-        print(payload)
-        user = User.objects.filter(id=payload["id"]).first()
+        user = User.objects.filter(id=payload["user_id"]).first()
         try:
             data = JSONParser().parse(request)
             newPassword = data["password"]

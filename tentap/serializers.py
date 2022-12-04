@@ -90,9 +90,9 @@ class ActivationLinkSerializer(serializers.ModelSerializer):
         return ActivationLink.objects.create(**validated_data)
 
 
-class PasswordResetLinkSerializer(serializers.ModelSerializer):
+class PasswordResetTokenSerializer(serializers.ModelSerializer):
     class Meta:
-        model = PasswordResetLink
+        model = PasswordResetToken
         fields = ['user', 'expiry_data', 'hash']
 
     def create(self, validated_data):
@@ -126,5 +126,4 @@ class CommentSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         instance.comment = validated_data.get('comment', instance.comment)
         return instance
-
 
