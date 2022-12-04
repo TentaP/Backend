@@ -10,60 +10,99 @@ from rest_framework import status
 from django import forms
 
 from tentap.serializers import UsersSerializer, CourseSerializer
-from tentap.models import Course
+from tentap.models import Course, University
 from tentap.permissions import *
 
 
 #https://www.bezkoder.com/django-rest-api/
 # TODO: Fix DELETE, issue: ForeignKey delete policy
-@api_view(['GET', 'DELETE'])
-def course(request, pk):
-    try:
-        course = Course.objects.get(pk=pk)
-    except Course.DoesNotExist:
-        return JsonResponse({'message': 'The course does not exist'}, status.HTTP_404_NOT_FOUND) 
+class coursePk(APIView):
+    permission_classes = [isNormalUser |isAdminUser | isSuperUser]
+    serializer_class = CourseSerializer
+    Model = Course
+    queryset = Model.objects.all()
 
-    if request.method == 'GET':
-        course_serializer = CourseSerializer(course)
-        return JsonResponse(course_serializer.data)
-    
-    elif request.method == 'DELETE':
-        course.delete()
-        return JsonResponse({'message': 'Course was deleted successfully!'}, status.HTTP_204_NO_CONTENT)
-
-@api_view(['GET', 'POST'])
-def courses(request):
-    courses = Course.objects.all()
-    if request.method == 'GET':
-        course_serializer = CourseSerializer(courses, many=True)
-        return JsonResponse(course_serializer.data, safe=False)
-
-    elif request.method == 'POST':
-        permission_classes = [isNormalUser | isAdminUser | isSuperUser]
-        token = request.COOKIES.get('jwt')
-        print(token)
-
-        course_data = JSONParser().parse(request)
-        course_serializer = CourseSerializer(data=course_data)
-
-        if not token:
-            raise AuthenticationFailed('Unauthenticated!')
+    """
+    Get course by pk
+    """
+    def get(self, request, pk):
         try:
-            payload = jwt.decode(token, secret.SECRET_KEY, algorithms='HS256')
-        except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed('Session Expired!')
+            instance = self.queryset.get(pk=pk)
+        except Model.DoesNotExist:
+            return JsonResponse({'detail': 'The course does not exist'}, status=status.HTTP_404_NOT_FOUND) 
+        serializer = serializer_class(instance)
+        return JsonResponse(serializer.data, status=status.HTTP_200_OK)
 
-        user = User.objects.filter(id=payload['id']).first()
+    """
+    Delete course if user is admin or superuser
+    """
+    def delete(self, request, pk):
+        print("entering delete")
+        if isNormalUser():
+            return JsonResponse({'detail': 'Normal user can not delete course'}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            instance = queryset.get(pk=pk)
+        except Course.DoesNotExist:
+            return JsonResponse({'detail': 'The course does not exist'}, status=status.HTTP_404_NOT_FOUND) 
+        instance.delete()
+        return JsonResponse({'detail': 'Course was deleted successfully!'}, status=status.HTTP_204_NO_CONTENT)
 
-        if (user.university != course_data.university):
-            return JsonResponse(status.HTTP_403_FORBIDDEN)
+    """
+    Update course if user is admin or superuser
+    """
+    def put(self, request, pk):
+        if isNormalUser():
+            return JsonResponse({'detail': 'Normal user can not update course'}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            instance = queryset.get(pk=pk)
+        except Model.DoesNotExist:
+            return JsonResponse({'detail': 'The course does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        instance_data = JSONParser().parse(request)
+        serializer = serializer_class(instance, data=instance_data)  
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+        return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        if course_serializer.is_valid():
-            course_serializer.save()
-            return JsonResponse(course_serializer.data, status.HTTP_201_CREATED) 
-        return JsonResponse(course_serializer.errors, status.HTTP_400_BAD_REQUEST)
 
+class courses(APIView):
+    permission_classes = [isNormalUser | isAdminUser | isSuperUser]
+    serializer_class = CourseSerializer
+    Model = Course
+    queryset = Model.objects.all()
 
+    """
+    Get list of courses by university if normaluser else get all courses
+    """
+    def get(self, request):
+        user = get_user(request)
+        
+        print(user.university)
+        if isNormalUser():
+            instances = self.queryset.filter(university=user.university).all()
+        elif isAdminUser() or isSuperUser():
+            instances = self.queryset
+        else:
+            return JsonResponse(status=status.HTTP_403_FORBIDDEN)
+        serializer = self.serializer_class(instances, many=True)
+        return JsonResponse(serializer.data, safe=False)
 
+    """
+    Post course if user is admin or superuser
+    """
+    def post(self, request):
+        if isNormalUser():
+            return JsonResponse({'detail': 'Normal user can not post course'}, status=status.HTTP_403_FORBIDDEN)
 
+        instance_data = JSONParser().parse(request)
+        serializer = self.serializer_class(data=instance_data)
 
+        user = get_user(request)
+
+        if (user.university != instance_data.university):
+            return JsonResponse(status=status.HTTP_403_FORBIDDEN)
+
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status=status.HTTP_201_CREATED) 
+        return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
