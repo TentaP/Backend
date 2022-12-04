@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.forms import ModelForm
-from tentap.models import User, Course, File, University, ActivationLink, PasswordResetLink, Review, Comment
+from tentap.models import User, Course, File, University, ActivationLink, PasswordResetToken, Review, Comment
 
 
 # https://www.django-rest-framework.org/tutorial/1-serialization/
@@ -96,7 +96,7 @@ class PasswordResetTokenSerializer(serializers.ModelSerializer):
         fields = ['user', 'expiry_data', 'hash']
 
     def create(self, validated_data):
-        return PasswordResetLink.objects.create(**validated_data)
+        return PasswordResetToken.objects.create(**validated_data)
 
 
 class ReviewSerializer(serializers.ModelSerializer):

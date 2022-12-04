@@ -83,17 +83,7 @@ class login(APIView):
 
         refresh = RefreshToken.for_user(user)
 
-        # payload = {
-        #     "id": user.id,
-        #     "username": user.username,
-        #     "email": user.email,
-        #     "exp": datetime.utcnow() + timedelta(minutes=60),
-        #     "iat": datetime.utcnow()
-        # }
-        # token = jwt.encode(payload, secret.SECRET_KEY, algorithm="HS256")
-        #
         resp = Response()
-        # resp.set_cookie(key="Bearer ", value=refresh.access_token, httponly=True)
         resp.data = {
             'detail': "successfully logged in",
             'access': str(refresh.access_token),
@@ -242,13 +232,9 @@ class requestPasswordResetToken(APIView):
         passwordResetToken = PasswordResetToken.objects.filter(user_id=user.id).first()
         hash_ = get_random_hash()
         if passwordResetToken:
-            passwordResetToken.hash = hash_
+            passwordResetToken.delete()
             passwordResetToken.save()
-            send_mail("reset your password with this token", str(hash_), "noubah-8@studnet.ltu.se", [str(email)])
-            print(hash_)
-            return Response({"detail": f"an email has been sent to {email}"}, status=200)
 
-        print(user.id)
         password_reset_link_payload = {
             "user": user.id,
             "hash": str(hash_),
@@ -287,6 +273,8 @@ class resetPasswordViaToken(APIView):
         elif token != reset_token.hash:
             return Response({"detail": "wrong reset token!"}, status=500)
         elif timezone.now() > reset_token.expiry_data:
+            print(timezone.now())
+            print(reset_token.expiry_data)
             return Response({"detail": "reset token is expired!"}, status=500)
 
 
