@@ -97,7 +97,7 @@ class logout(APIView):
     permission_classes = [isNormalUser | isAdminUser | isSuperUser]
 
     def post(self, request):
-        token = request.headers.get("Authorization")[7:]
+        token = request.headers.get("Authorization")
         if not token:
             raise NotAuthenticated("not authenticated!")
         resp = Response()
@@ -114,7 +114,7 @@ class userView(APIView):
     permission_classes = [isNormalUser | isAdminUser | isSuperUser]
 
     def get(self, request):
-        token = request.headers.get("Authorization")[7:]
+        token = request.headers.get("Authorization")
 
         if not token:
             raise NotAuthenticated("not authenticated!")
@@ -282,7 +282,7 @@ class resetPassword(APIView):
     permission_classes = [isNormalUser | isAdminUser | isSuperUser]
 
     def put(self, request):
-        token = request.headers.get("Authorization")[7:]
+        token = request.headers.get("Authorization")
 
         if not token:
             raise NotAuthenticated('not authenticated!')

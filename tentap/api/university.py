@@ -18,11 +18,11 @@ from tentap.permissions import *
 # TODO: Fix DELETE, issue: ForeignKey delete policy
 class universitypk(APIView):
     permission_classes = [isAdminUser | isSuperUser]
-    def get(request, pk):
+    def get(self, pk):
         university_serializer = UniversitySerializer(university)
         return JsonResponse(university_serializer.data)
         
-    def delete(request, pk):
+    def delete(self, pk):
         university.delete()
         return JsonResponse({'message': 'University was deleted successfully!'}, status.HTTP_204_NO_CONTENT)
 
