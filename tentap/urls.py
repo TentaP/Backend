@@ -1,13 +1,11 @@
 from django.urls import path
 
 from . import views
-from .api import auth, course, file, university, review, comment
-
+from .api import auth, course, file, university, review, comment, users
 
 urlpatterns = [
     path('', views.index, name='index'),
     path('api/login', auth.login.as_view()),
-    path('api/logout', auth.logout.as_view()),
     path('api/signup', auth.signup.as_view()),
     path('api/verifection/<str:email>/<str:hash_>', auth.emailVerification.as_view()),
     path('api/set_superuser', auth.setSuperUser.as_view()),
@@ -17,9 +15,11 @@ urlpatterns = [
     path('api/reset_password_via_token', auth.resetPasswordViaToken.as_view()),
     path('api/reset_password', auth.resetPassword.as_view()),
     #User
-    path('api/user', auth.userView.as_view()),
-    path('api/users/<int:pk>', auth.user_details),
+    path('api/user', users.userView.as_view()),
+    path('api/user/<int:pk>', users.userDetails.as_view()),
     path('api/user/files', file.filesByUser.as_view()),
+    path('api/users', users.usersList.as_view()),
+
     #Course/s
     path('api/courses', course.courses.as_view()),
     path('api/course/<int:pk>/', course.coursePk.as_view()),

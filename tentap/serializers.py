@@ -38,7 +38,7 @@ class CourseSerializer(serializers.ModelSerializer):
         use_natural_foreign_keys = True
         use_natural_primary_keys = True
         model = Course
-        fields = ['id', 'course_name', 'university', 'description']
+        fields = ['id', 'course_name','description','university']
 
     def create(self, validated_data):
         return Course.objects.create(**validated_data)
