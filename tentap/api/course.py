@@ -28,9 +28,9 @@ class coursePk(APIView):
     def get(self, request, pk):
         try:
             instance = self.queryset.get(pk=pk)
-        except Model.DoesNotExist:
+        except self.Model.DoesNotExist:
             return JsonResponse({'detail': 'The course does not exist'}, status=status.HTTP_404_NOT_FOUND) 
-        serializer = serializer_class(instance)
+        serializer = self.serializer_class(instance)
         return JsonResponse(serializer.data, status=status.HTTP_200_OK)
 
     """
@@ -41,7 +41,7 @@ class coursePk(APIView):
         if isNormalUser():
             return JsonResponse({'detail': 'Normal user can not delete course'}, status=status.HTTP_403_FORBIDDEN)
         try:
-            instance = queryset.get(pk=pk)
+            instance = self.queryset.get(pk=pk)
         except Course.DoesNotExist:
             return JsonResponse({'detail': 'The course does not exist'}, status=status.HTTP_404_NOT_FOUND) 
         instance.delete()
@@ -54,18 +54,18 @@ class coursePk(APIView):
         if isNormalUser():
             return JsonResponse({'detail': 'Normal user can not update course'}, status=status.HTTP_403_FORBIDDEN)
         try:
-            instance = queryset.get(pk=pk)
-        except Model.DoesNotExist:
+            instance = self.queryset.get(pk=pk)
+        except self.Model.DoesNotExist:
             return JsonResponse({'detail': 'The course does not exist'}, status=status.HTTP_404_NOT_FOUND)
         instance_data = JSONParser().parse(request)
-        serializer = serializer_class(instance, data=instance_data)  
+        serializer = self.serializer_class(instance, data=instance_data)
         if serializer.is_valid():
             serializer.save()
             return JsonResponse(serializer.data, status=status.HTTP_200_OK)
         return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class courses(APIView):
+class coursesByUni(APIView):
     permission_classes = [isNormalUser | isAdminUser | isSuperUser]
     serializer_class = CourseSerializer
     Model = Course
@@ -74,34 +74,34 @@ class courses(APIView):
     """
     Get list of courses by university if normaluser else get all courses
     """
-    def get(self, request):
+    def get(self, request, uni):
         user = get_user(request)
-        
-        print(user.university)
-        if isNormalUser():
-            instances = self.queryset.filter(university=user.university).all()
-        elif isAdminUser() or isSuperUser():
-            instances = self.queryset
-        else:
-            return JsonResponse(status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            uni = University.objects.get_by_natural_key(uni)
+        except University.DoesNotExist:
+            return JsonResponse({'detail': 'The university does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+        instances = uni.courses.all()
         serializer = self.serializer_class(instances, many=True)
         return JsonResponse(serializer.data, safe=False)
 
     """
-    Post course if user is admin or superuser
+    Post course by uni if user is admin or superuser. if uni doesn't exist, create it.
     """
-    def post(self, request):
-        if isNormalUser():
+    def post(self, request, uni):
+        user = get_user(request)
+        if not (user.is_superuser or user.is_admin):
             return JsonResponse({'detail': 'Normal user can not post course'}, status=status.HTTP_403_FORBIDDEN)
 
         instance_data = JSONParser().parse(request)
+        try:
+            uni = University.objects.get(university_name=uni)
+        except University.DoesNotExist:
+            uni = University.objects.create(university_name=uni)
+
+        instance_data['university'] = uni.pk
         serializer = self.serializer_class(data=instance_data)
-
-        user = get_user(request)
-
-        if (user.university != instance_data.university):
-            return JsonResponse(status=status.HTTP_403_FORBIDDEN)
-
         if serializer.is_valid():
             serializer.save()
             return JsonResponse(serializer.data, status=status.HTTP_201_CREATED) 
