@@ -31,7 +31,7 @@ urlpatterns = [
     path('api/file/<int:pk>/reviews', review.ReviewListByFile.as_view()),
     path('api/file/<int:pk>/comments', comment.CommentListByFile.as_view()),
     #University
-    path('api/uni', university.university),
+    path('api/uni', university.university.as_view()),
     path('api/uni/<int:pk>', university.universitypk.as_view()),
     #Review/s
     path('api/review/course/<int:course_pk>', review.ReviewItem.as_view()),

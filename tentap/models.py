@@ -19,7 +19,7 @@ class File(models.Model):
     file = models.FileField(upload_to=user_directory_path, blank=True, null=True)
 
     course = models.ForeignKey('Course', related_name="Files", on_delete=models.PROTECT)
-    at_university = models.ForeignKey('University', related_name="Files", on_delete=models.PROTECT)
+    at_university = models.ForeignKey('University', related_name="Files", on_delete=models.RESTRICT)
     date_of_uploading = models.DateTimeField(auto_now=True)
 
     comments = models.ForeignKey('Comment', related_name='File', on_delete=models.CASCADE, blank=True, null=True)
@@ -39,22 +39,11 @@ class File(models.Model):
 class University(models.Model):
     university_name = models.CharField(max_length=200, unique=True)
 
-    objects = UniversityManager()
-
-    def natural_key(self):
-        return (self.university_name)
-
-
 
 class Course(models.Model):
     course_name = models.CharField(max_length=200, unique=True)
-    university = models.ForeignKey(University, related_name='courses', on_delete=models.PROTECT)
+    university = models.ForeignKey(University, related_name='courses', blank=True, null=True, on_delete=models.CASCADE)
     description = models.CharField(max_length=700)
-
-    objects = CourseManager()
-
-    class Meta:
-        unique_together = ('course_name', 'university')
 
 
 class Comment(models.Model):
@@ -79,7 +68,7 @@ class User(AbstractUser):
     password = models.CharField(max_length=255)
     is_admin = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
-    university = models.ForeignKey(University, related_name="Users", null=True, blank=True, on_delete=models.PROTECT)
+    university = models.ForeignKey(University, related_name="Users", null=True, blank=True, on_delete=models.SET_NULL)
     is_active = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'username'

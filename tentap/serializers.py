@@ -35,8 +35,6 @@ class UsersSerializer(serializers.ModelSerializer):
 # Course
 class CourseSerializer(serializers.ModelSerializer):
     class Meta:
-        use_natural_foreign_keys = True
-        use_natural_primary_keys = True
         model = Course
         fields = ['id', 'course_name', 'university', 'description']
 
@@ -54,8 +52,7 @@ class CourseSerializer(serializers.ModelSerializer):
 class FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = File
-        fields = ['filename', 'uploaded_by', 'file', 'course', 'at_university', 'date_of_uploading',
-                   'file_type']
+        fields = ['filename', 'uploaded_by', 'file', 'course', 'at_university', 'date_of_uploading', 'file_type']
 
     def create(self, validated_data):
         return File.objects.create(**validated_data)
@@ -68,8 +65,6 @@ class FileSerializer(serializers.ModelSerializer):
 
 class UniversitySerializer(serializers.ModelSerializer):
     class Meta:
-        use_natural_foreign_keys = True
-        use_natural_primary_keys = True
         model = University
         fields = ['university_name']
 
