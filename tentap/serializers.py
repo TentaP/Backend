@@ -66,7 +66,7 @@ class FileSerializer(serializers.ModelSerializer):
 class UniversitySerializer(serializers.ModelSerializer):
     class Meta:
         model = University
-        fields = ['university_name']
+        fields = ['id', 'university_name']
 
     def create(self, validated_data):
         return University.objects.create(**validated_data)
