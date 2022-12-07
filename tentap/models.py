@@ -23,6 +23,7 @@ class File(models.Model):
     date_of_uploading = models.DateTimeField(auto_now=True)
 
     comments = models.ForeignKey('Comment', related_name='File', on_delete=models.CASCADE, blank=True, null=True)
+    has_solutions = models.BooleanField(default=False)
 
     class fileType(models.TextChoices):
         EX = 'EX', 'Exam'
