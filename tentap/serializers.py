@@ -52,7 +52,7 @@ class CourseSerializer(serializers.ModelSerializer):
 class FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = File
-        fields = ['filename', 'uploaded_by', 'file', 'course', 'at_university', 'date_of_uploading', 'file_type']
+        fields = ['id', 'filename', 'uploaded_by', 'file', 'course', 'at_university', 'date_of_uploading', 'file_type']
 
     def create(self, validated_data):
         return File.objects.create(**validated_data)
@@ -62,6 +62,11 @@ class FileSerializer(serializers.ModelSerializer):
         instance.file_type = validated_data.get('file_type', instance.file)
         return instance
 
+
+class FileSearchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = File
+        fields = ['id', 'filename', 'uploaded_by', 'course', 'at_university', 'date_of_uploading', 'file_type']
 
 class UniversitySerializer(serializers.ModelSerializer):
     class Meta:
