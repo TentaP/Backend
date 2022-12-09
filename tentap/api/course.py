@@ -76,6 +76,7 @@ class coursePk(APIView):
 
 class coursesByUni(APIView):
     permission_classes = [isNormalUser | isAdminUser | isSuperUser]
+    serializer_class = CourseSerializer
     """
     Get list of courses by university if normal user else get all courses
     """
