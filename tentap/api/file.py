@@ -22,14 +22,14 @@ class fileUpload(APIView):
     serializer_class = FileSerializer
     queryset = File.objects.all()
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
 
         user = get_user(request)
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save(uploaded_by=user)
             return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
-        return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class filePk(APIView):
@@ -60,8 +60,8 @@ class filePk(APIView):
         except self.Model.DoesNotExist:
             return JsonResponse({'detail': 'file does not exist'}, status=status.HTTP_404_NOT_FOUND)
 
-        if not (user.is_admin or user.is_superuser) and file.author != user.pk:
-            return JsonResponse(status=status.HTTP_401_UNAUTHORIZED)
+        if not (user.is_admin or user.is_superuser) and file.uploaded_by != user:
+            return JsonResponse({'detail': 'you are not the author'}, status=status.HTTP_401_UNAUTHORIZED)
 
         serializer = self.serializer_class(file, request.data)
         if serializer.is_valid():
@@ -73,14 +73,14 @@ class filePk(APIView):
         user = get_user(request)
         try:
             file = File.objects.get(pk=pk)
-        except File.DoesNotExist as e:
-            return JsonResponse({'detail': e}, status=status.HTTP_404_NOT_FOUND)
+        except File.DoesNotExist:
+            return JsonResponse({'detail': 'file does not exist'}, status=status.HTTP_404_NOT_FOUND)
 
-        if not (user.is_admin or user.is_superuser) and file.author != user.pk:
-            return JsonResponse(status=status.HTTP_401_UNAUTHORIZED)
+        if not (user.is_admin or user.is_superuser) and file.uploaded_by != user:
+            return JsonResponse({'detail': 'you are not the author'}, status=status.HTTP_401_UNAUTHORIZED)
 
         file.delete()
-        return JsonResponse(status=status.HTTP_204_NO_CONTENT)
+        return JsonResponse({},status=status.HTTP_204_NO_CONTENT)
 
 class filesByCourse(APIView):
     permissions_classes = [isNormalUser | isAdminUser | isSuperUser]
@@ -92,8 +92,8 @@ class filesByCourse(APIView):
             files = course.Files.all()
             file_serializer = self.serializer_class(files, many=True)
             return JsonResponse(file_serializer.data, safe=False, status=status.HTTP_200_OK)
-        except Course.DoesNotExist as e:
-            return JsonResponse({'detail': e}, status=status.HTTP_404_NOT_FOUND)
+        except Course.DoesNotExist:
+            return JsonResponse({'detail': 'course does not exist'}, status=status.HTTP_404_NOT_FOUND)
 
 class filesByUser(APIView):
     permissions_classes = [isNormalUser | isAdminUser | isSuperUser]
@@ -104,9 +104,7 @@ class filesByUser(APIView):
             user = User.objects.get(pk=pk)
         except User.DoesNotExist:
             return JsonResponse({'detail': 'user does not exist'}, status=status.HTTP_404_NOT_FOUND)
-        try:
-            files = user.Files.all()
-            serializer = self.serializer_class(files, many=True)
-            return JsonResponse(serializer.data, safe=False, status=status.HTTP_200_OK)
-        except File.DoesNotExist as e:
-            return JsonResponse({'detail': e}, status=status.HTTP_404_NOT_FOUND)
+
+        files = user.Files.all()
+        serializer = self.serializer_class(files, many=True)
+        return JsonResponse(serializer.data, safe=False, status=status.HTTP_200_OK)

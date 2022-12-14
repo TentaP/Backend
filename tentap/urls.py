@@ -24,7 +24,7 @@ urlpatterns = [
     #Course/s
     path('api/courses', course.courses.as_view()),
     path('api/course/<int:pk>/', course.coursePk.as_view()),
-    path('api/course/<int:pk>/files', file.filesByCourse.as_view()),
+    path('api/course/<str:course>/files', file.filesByCourse.as_view()),
     path('api/course/<int:pk>/reviews', review.ReviewListByCourse.as_view()),
     #File
     path('api/file', file.fileUpload.as_view()),

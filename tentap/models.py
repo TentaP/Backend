@@ -10,7 +10,7 @@ from tentap.managers import CourseManager, UniversityManager
 # Create your models here.
 def user_directory_path(instance, filename):
     # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
-    return 'user_{0}/{1}'.format(instance.uploaded_by.id, filename)
+    return 'user_{0}/{1}'.format(instance.uploaded_by.id, instance.filename)
 
 
 """
@@ -32,7 +32,6 @@ class File(models.Model):
     file = models.FileField(upload_to=user_directory_path, blank=True, null=True)
 
     course = models.ForeignKey('Course', related_name="Files", on_delete=models.PROTECT)
-    at_university = models.ForeignKey('University', related_name="Files", on_delete=models.RESTRICT)
     date_of_uploading = models.DateTimeField(auto_now=True)
 
     comments = models.ForeignKey('Comment', related_name='File', on_delete=models.CASCADE, blank=True, null=True)
@@ -50,6 +49,7 @@ class File(models.Model):
         choices=fileType.choices,
         default=fileType.AS
     )
+
 
 
 class University(models.Model):

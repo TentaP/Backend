@@ -50,9 +50,12 @@ class CourseSerializer(serializers.ModelSerializer):
 
 # File
 class FileSerializer(serializers.ModelSerializer):
+    has_solutions = serializers.BooleanField(required=False)
+    file_type = serializers.CharField(required=False)
+
     class Meta:
         model = File
-        fields = ['id', 'filename',  'file', 'course', 'at_university', 'date_of_uploading', 'file_type', 'has_solutions']
+        fields = ['id', 'filename',  'file', 'course', 'date_of_uploading', 'file_type', 'has_solutions']
 
     def create(self, validated_data):
         return File.objects.create(**validated_data)
@@ -60,13 +63,15 @@ class FileSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         instance.filename = validated_data.get('filename', instance.filename)
         instance.file_type = validated_data.get('file_type', instance.file)
+        instance.has_solutions = validated_data.get('has_solutions', instance.has_solutions)
         return instance
 
 
 class FileSearchSerializer(serializers.ModelSerializer):
     class Meta:
         model = File
-        fields = ['id', 'filename', 'uploaded_by', 'course', 'at_university', 'date_of_uploading', 'file_type', 'has_solutions']
+        fields = ['id', 'filename', 'uploaded_by', 'course', 'date_of_uploading', 'file_type', 'has_solutions']
+        read_only_fields = ['id', 'filename', 'uploaded_by', 'course', 'date_of_uploading', 'file_type', 'has_solutions']
 
 class UniversitySerializer(serializers.ModelSerializer):
     class Meta:
