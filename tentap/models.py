@@ -6,10 +6,23 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 
 from tentap.managers import CourseManager, UniversityManager
 
+
 # Create your models here.
 def user_directory_path(instance, filename):
     # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
-    return 'user_{0}/{1}'.format(instance.uploaded_by.id, filename)
+    return 'user_{0}/{1}'.format(instance.uploaded_by.id, instance.filename)
+
+
+"""
+def user_avatar_path(instance):
+    # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
+    return 'user_{0}/avatar.png'.format(instance.User.id)
+
+class Avatar(models.Model):
+    filename = models.CharField(default="avatar.png", max_length=100)
+    avatar = models.ImageField(upload_to=user_avatar_path, default="media/default/img_avatar.png")
+"""
+
 
 class File(models.Model):
     # Types of files, subject to change.
@@ -19,11 +32,13 @@ class File(models.Model):
     file = models.FileField(upload_to=user_directory_path, blank=True, null=True)
 
     course = models.ForeignKey('Course', related_name="Files", on_delete=models.PROTECT)
-    at_university = models.ForeignKey('University', related_name="Files", on_delete=models.RESTRICT)
     date_of_uploading = models.DateTimeField(auto_now=True)
 
     comments = models.ForeignKey('Comment', related_name='File', on_delete=models.CASCADE, blank=True, null=True)
     has_solutions = models.BooleanField(default=False)
+
+    has_solutions = models.BooleanField(default="False")
+
 
     class fileType(models.TextChoices):
         EX = 'EX', 'Exam'
@@ -35,6 +50,7 @@ class File(models.Model):
         choices=fileType.choices,
         default=fileType.AS
     )
+
 
 
 class University(models.Model):
@@ -59,7 +75,8 @@ class Review(models.Model):
     course = models.ForeignKey('Course', related_name='Reviews', on_delete=models.PROTECT, blank=True, null=True)
     file = models.ForeignKey('File', related_name='Reviews', on_delete=models.PROTECT, blank=True, null=True)
 
-    review = models.DecimalField(decimal_places=1, max_digits=2, validators=[MinValueValidator(0), MaxValueValidator(1)])
+    review = models.DecimalField(decimal_places=1, max_digits=2,
+                                 validators=[MinValueValidator(0), MaxValueValidator(1)])
     body = models.CharField(max_length=700)
 
 
@@ -86,4 +103,3 @@ class PasswordResetToken(models.Model):
     user = models.ForeignKey('User', related_name='PasswordResetLink', on_delete=models.PROTECT)
     expiry_data = models.DateTimeField(null=True)
     hash = models.CharField(max_length=256)
-
