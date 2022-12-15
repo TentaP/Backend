@@ -84,9 +84,14 @@ class login(APIView):
 
         resp = Response()
         resp.data = {
+            'id': user.id,
+            'username': user.username,
+            'admin': user.is_admin,
+            'super_user': user.is_superuser,
             'detail': "successfully logged in",
             'access': str(refresh.access_token),
         }
+        print(resp.data)
         resp.status_code = 200
         print(jwt.decode(str(refresh.access_token), secret.SECRET_KEY, algorithms='HS256'))
         return resp
