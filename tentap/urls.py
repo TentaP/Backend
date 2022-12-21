@@ -1,7 +1,7 @@
 from django.urls import path
 
 from . import views
-from .api import auth, course, file, university, review, comment
+from .api import auth, course, file, university, review, comment,users
 
 urlpatterns = [
     path('', views.index, name='index'),

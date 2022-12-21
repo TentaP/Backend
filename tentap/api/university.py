@@ -51,13 +51,12 @@ class university(APIView):
 
     def post(self, request):
         user = get_user(request)
+        data = JSONParser().parse(request)
         if user.is_superuser or user.is_admin:
-            data = JSONParser().parse(request)
             serializer = self.serializer_class(data=data)
-            if serializer.is_valid():
-                serializer.save()
-                return JsonResponse(serializer.data, status.HTTP_201_CREATED)
-            return JsonResponse(serializer.errors, status.HTTP_400_BAD_REQUEST)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return JsonResponse({"detail":"University has been added successfully!"}, status=status.HTTP_201_CREATED)
         else:
             return JsonResponse({'detail': 'Normal users can not post universities'},status=status.HTTP_401_UNAUTHORIZED)
 

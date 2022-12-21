@@ -97,10 +97,11 @@ class coursesByUni(APIView):
     """
     def post(self, request, uni):
         user = get_user(request)
+        instance_data = JSONParser().parse(request)
+
         if not (user.is_superuser or user.is_admin):
             return JsonResponse({'detail': 'Normal user can not post course'}, status=status.HTTP_403_FORBIDDEN)
 
-        instance_data = JSONParser().parse(request)
         try:
             university = University.objects.get(university_name=uni)
         except University.DoesNotExist:
@@ -108,8 +109,7 @@ class coursesByUni(APIView):
 
         instance_data['university'] = university.pk
         serializer = self.serializer_class(data=instance_data)
-        if serializer.is_valid():
-            serializer.save()
-            return JsonResponse(serializer.data, status=status.HTTP_201_CREATED) 
-        return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        print(serializer.data)
+        return JsonResponse({'detail': f"{serializer.data['course_name']} has been created"}, status=status.HTTP_201_CREATED)

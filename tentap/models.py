@@ -37,7 +37,6 @@ class File(models.Model):
     comments = models.ForeignKey('Comment', related_name='File', on_delete=models.CASCADE, blank=True, null=True)
     has_solutions = models.BooleanField(default=False)
 
-    has_solutions = models.BooleanField(default="False")
 
 
     class fileType(models.TextChoices):

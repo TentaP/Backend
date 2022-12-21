@@ -13,6 +13,7 @@ from tentap.serializers import FileSerializer, FileSearchSerializer
 from tentap.models import File, Course, User
 from tentap.permissions import *
 
+
 """
 post request for the File model
 """
@@ -26,10 +27,10 @@ class fileUpload(APIView):
 
         user = get_user(request)
         serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            serializer.save(uploaded_by=user)
-            return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
-        return JsonResponse({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(uploaded_by=user)
+        return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
+        #return JsonResponse({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class filePk(APIView):
@@ -86,11 +87,16 @@ class filesByCourse(APIView):
     permissions_classes = [isNormalUser | isAdminUser | isSuperUser]
     serializer_class = FileSearchSerializer
 
-    def get(self, request, course):
+    def get(self, request, course_name):
         try:
-            course = Course.objects.get(course_name=course)
+            course = Course.objects.get(course_name=course_name)
             files = course.Files.all()
             file_serializer = self.serializer_class(files, many=True)
+
+            ## I changed this to get name instead of user id... can it effect anything else?
+            ## TODO change this if needed
+            for user_id in file_serializer.data:
+                user_id['uploaded_by'] = User.objects.get(pk=user_id['uploaded_by']).username
             return JsonResponse(file_serializer.data, safe=False, status=status.HTTP_200_OK)
         except Course.DoesNotExist:
             return JsonResponse({'detail': 'course does not exist'}, status=status.HTTP_404_NOT_FOUND)
