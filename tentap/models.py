@@ -34,6 +34,8 @@ class File(models.Model):
     course = models.ForeignKey('Course', related_name="Files", on_delete=models.PROTECT)
     date_of_uploading = models.DateTimeField(auto_now=True)
 
+    file_ext = models.CharField(max_length=200)
+
     comments = models.ForeignKey('Comment', related_name='File', on_delete=models.CASCADE, blank=True, null=True)
     has_solutions = models.BooleanField(default=False)
 

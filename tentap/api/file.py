@@ -12,6 +12,8 @@ from django import forms
 from tentap.serializers import FileSerializer, FileSearchSerializer
 from tentap.models import File, Course, User
 from tentap.permissions import *
+import filetype
+
 
 
 """
@@ -26,11 +28,21 @@ class fileUpload(APIView):
     def post(self, request):
 
         user = get_user(request)
+        request.data['filename'] = str(request.data['file']) # TODO the name will take the file name automatically change this if needed
+        #request.data['file_ext'] = filetype.guess_extension(request.data['file'])
+        request.data['file_ext'] = filetype.guess_mime(request.data['file'])
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(uploaded_by=user)
         return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
-        #return JsonResponse({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class files(APIView):
+
+    def get(self, request):
+        instances = File.objects.all()
+        serializer = FileSerializer(instances, many=True)
+        return JsonResponse(serializer.data, safe=False, status=status.HTTP_200_OK)
 
 
 class filePk(APIView):
