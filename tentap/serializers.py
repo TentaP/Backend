@@ -31,6 +31,11 @@ class UsersSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+class AvatarSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['avatar']
+
 
 # Course
 class CourseSerializer(serializers.ModelSerializer):

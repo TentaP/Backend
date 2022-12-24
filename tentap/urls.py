@@ -1,7 +1,7 @@
 from django.urls import path
 
 from . import views
-from .api import auth, course, file, university, review, comment
+from .api import auth, course, file, university, review, comment, users, avatar
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -16,6 +16,7 @@ urlpatterns = [
     path('api/reset_password', auth.resetPassword.as_view()),
     #User
     path('api/user', users.userView.as_view()),
+    path('api/user/avatar', avatar.avatar_upload.as_view()),
     path('api/user/<int:pk>', users.userDetails.as_view()),
     path('api/user/files', file.filesByUser.as_view()),
     path('api/users', users.usersList.as_view()),

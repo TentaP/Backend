@@ -12,17 +12,9 @@ def user_directory_path(instance, filename):
     # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
     return 'user_{0}/{1}'.format(instance.uploaded_by.id, instance.filename)
 
-
-"""
-def user_avatar_path(instance):
+def user_avatar_path(instance, filename):
     # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
-    return 'user_{0}/avatar.png'.format(instance.User.id)
-
-class Avatar(models.Model):
-    filename = models.CharField(default="avatar.png", max_length=100)
-    avatar = models.ImageField(upload_to=user_avatar_path, default="media/default/img_avatar.png")
-"""
-
+    return 'user_{0}/avatar.png'.format(instance.id)
 
 class File(models.Model):
     # Types of files, subject to change.
@@ -88,9 +80,18 @@ class User(AbstractUser):
     is_superuser = models.BooleanField(default=False)
     university = models.ForeignKey(University, related_name="Users", null=True, blank=True, on_delete=models.SET_NULL)
     is_active = models.BooleanField(default=False)
+    avatar = models.ImageField(upload_to=user_avatar_path, default="static/avatar.png")
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = []
+
+    def get_avatar_path(self):
+        return self.avatar.path
+
+    def set_avatar_to_default(self):
+        self.avatar.delete()
+        self.avatar = "static/avatar.png"
+        self.save()
 
 
 class ActivationLink(models.Model):
