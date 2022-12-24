@@ -17,6 +17,7 @@ urlpatterns = [
     #User
     path('api/user', users.userView.as_view()),
     path('api/user/avatar', avatar.avatar_upload.as_view()),
+    path('api/user/avatar/<int:pk>', avatar.avatar_pk.as_view()),
     path('api/user/<int:pk>', users.userDetails.as_view()),
     path('api/user/files', file.filesByUser.as_view()),
     path('api/users', users.usersList.as_view()),

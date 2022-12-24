@@ -11,6 +11,7 @@ from tentap.permissions import *
 
 
 class avatar_upload(APIView):
+    permission_classes = [isNormalUser | isAdminUser | isSuperUser]
     parser_classes = [MultiPartParser, FormParser]
     serializer_class = AvatarSerializer
 
@@ -50,3 +51,24 @@ class avatar_upload(APIView):
             return JsonResponse({'detail': 'no avatar picture'}, status=status.HTTP_404_NOT_FOUND)
         user.set_avatar_to_default()
         return JsonResponse({'detail': 'avatar picture deleted'}, status=status.HTTP_200_OK)
+
+
+class avatar_pk(APIView):
+    permission_classes = [isNormalUser | isAdminUser | isSuperUser]
+    parser_classes = [MultiPartParser, FormParser]
+    serializer_class = AvatarSerializer
+
+    def get(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return JsonResponse({'detail': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        avatar_path = user.get_avatar_path()
+        print(avatar_path)
+        try:
+            with open(avatar_path, "rb") as avatar_file:
+                avatar_data = base64.b64encode(avatar_file.read()).decode('utf-8')
+        except FileNotFoundError as e:
+            return JsonResponse({'detail': e}, status=status.HTTP_404_NOT_FOUND)
+
+        return JsonResponse(avatar_data, status=status.HTTP_200_OK, safe=False)
