@@ -28,10 +28,14 @@ class fileUpload(APIView):
     def post(self, request):
 
         user = get_user(request)
-        request.data['filename'] = str(request.data['file']) # TODO the name will take the file name automatically change this if needed
-        #request.data['file_ext'] = filetype.guess_extension(request.data['file'])
-        request.data['file_ext'] = filetype.guess_mime(request.data['file'])
-        serializer = self.serializer_class(data=request.data)
+        #request.data['file_ext'] = filetype.guess_extension(request.data['file']) guess_mime
+        payload = {
+            "course": (Course.objects.filter(course_name=request.data['course']).first()).id,
+            "file": request.data['file'],
+            "filename" : request.data['filename'], # TODO the name will take the file name automatically change this if needed
+            "file_ext" : filetype.guess_extension(request.data['file'])
+        }
+        serializer = self.serializer_class(data=payload)
         serializer.is_valid(raise_exception=True)
         serializer.save(uploaded_by=user)
         return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
