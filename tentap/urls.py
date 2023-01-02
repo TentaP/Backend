@@ -16,6 +16,7 @@ urlpatterns = [
     path('api/reset_password', auth.resetPassword.as_view()),
     #User
     path('api/user', users.userView.as_view()),
+    path('api/user/uni/<int:pk>', users.userUni.as_view()),
     path('api/user/<int:pk>', users.userDetails.as_view()),
     path('api/user/files', file.userFiles.as_view()),
     path('api/user/courses', course.userCourses.as_view()),

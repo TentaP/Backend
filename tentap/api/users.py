@@ -9,7 +9,7 @@ from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from tentap.models import ActivationLink, PasswordResetToken
+from tentap.models import University, ActivationLink, PasswordResetToken
 from tentap.serializers import UsersSerializer, ActivationLinkSerializer, PasswordResetTokenSerializer
 from tentap.permissions import *
 from tentap.security import email_validation, get_random_hash
@@ -72,3 +72,19 @@ class userView(APIView):
         user = User.objects.filter(id=payload["user_id"]).first()
         serializer = UsersSerializer(user)
         return Response(serializer.data)
+
+class userUni(APIView):
+    permission_classes = [isNormalUser | isAdminUser | isSuperUser]
+    serializer_class = UsersSerializer
+
+    def put(self, request, pk):
+        user = get_user(request)
+        try:
+            university = University.objects.get(pk=pk)
+        except University.DoesNotExist:
+            return Response({"detail": "University does not exist"}, status=404)
+
+        user.university = university
+        user.save()
+        return Response({"detail": "successfully updated"}, status=200)
+
