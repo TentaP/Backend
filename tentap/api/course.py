@@ -21,6 +21,17 @@ class courses(APIView):
         serializer = self.serializer_class(instances, many=True)
         return JsonResponse(serializer.data, safe=False, status=status.HTTP_200_OK)
 
+class userCourses(APIView):
+    permission_classes = [isNormalUser]
+    serializer_class = CourseSerializer
+    Model = Course
+    queryset = Model.objects.all()
+
+    def get(self, request):
+        user = get_user(request)
+        instances = user.university.courses.all()
+        serializer = self.serializer_class(instances, many=True)
+        return JsonResponse(serializer.data, safe=False, status=status.HTTP_200_OK)
 
 class coursePk(APIView):
     permission_classes = [isNormalUser |isAdminUser | isSuperUser]

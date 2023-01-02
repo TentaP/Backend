@@ -17,8 +17,12 @@ urlpatterns = [
     #User
     path('api/user', users.userView.as_view()),
     path('api/user/<int:pk>', users.userDetails.as_view()),
-    path('api/user/files', file.filesByUser.as_view()),
+    path('api/user/files', file.userFiles.as_view()),
+    path('api/user/courses', course.userCourses.as_view()),
     path('api/users', users.usersList.as_view()),
+
+    #UserSearch
+    path('api/user/<int:pk>/files', file.filesByUser.as_view()),
 
     #Course/s
     path('api/courses', course.courses.as_view()),

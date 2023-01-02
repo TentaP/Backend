@@ -130,3 +130,13 @@ class filesByUser(APIView):
         files = user.Files.all()
         serializer = self.serializer_class(files, many=True)
         return JsonResponse(serializer.data, safe=False, status=status.HTTP_200_OK)
+class userFiles(APIView):
+    permissions_classes = [isNormalUser | isAdminUser | isSuperUser]
+    serializer_class = FileSearchSerializer
+
+    def get(self, request):
+        user = get_user(request)
+
+        files = user.Files.all()
+        serializer = self.serializer_class(files, many=True)
+        return JsonResponse(serializer.data, safe=False, status=status.HTTP_200_OK)
