@@ -259,18 +259,14 @@ class resetPassword(APIView):
         except jwt.ExpiredSignatureError:
             raise AuthenticationFailed('session expired!')
 
-        user = User.objects.filter(id=payload["user_id"]).first()
         try:
+            user = User.objects.filter(id=payload["user_id"]).first()
             data = JSONParser().parse(request)
             newPassword = data["password"]
-        except Exception:
-            raise ParseError("incorrect json entry!")
-        user.set_password(newPassword)
-        try:
+            user.set_password(newPassword)
             user.save()
-        except Exception:
-            raise {
-                "status_code": 500,
-                "detail": "an error occurred while saving in the database "
-            }
-        return Response({"detail": f"password for {user.email} has been updated"}, status=201)
+            return Response({"detail": f"password for {user.email} has been updated"}, status=201)
+        except Exception as e:
+            return Response({"detail": f"{e}"})
+
+
