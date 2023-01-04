@@ -10,18 +10,24 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from tentap.models import University, ActivationLink, PasswordResetToken
-from tentap.serializers import UsersSerializer, ActivationLinkSerializer, PasswordResetTokenSerializer
+from tentap.serializers import UsersSerializer, ActivationLinkSerializer, PasswordResetTokenSerializer, NormalUsersSerializer
 from tentap.permissions import *
 from tentap.security import email_validation, get_random_hash
 from django.core.mail import send_mail
 
 class usersList(APIView):
-    permission_classes = [isAdminUser | isSuperUser]
+    permission_classes = [isNormalUser| isAdminUser | isSuperUser]
 
     def get(self, request):
+        user = get_user(request)
         users = User.objects.all()
-        serializer = UsersSerializer(users, many=True)
-        return JsonResponse(serializer.data, status=200,safe=False)
+        if user.is_admin or user.is_superuser:
+            serializer = UsersSerializer(users, many=True)
+            return JsonResponse(serializer.data, status=200,safe=False)
+        else:
+            serializer = NormalUsersSerializer(users, many=True)
+            return JsonResponse(serializer.data, status=200,safe=False)
+
 
 class userDetails(APIView):
     permission_classes = [isAdminUser | isSuperUser]

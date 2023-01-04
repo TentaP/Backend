@@ -4,6 +4,10 @@ from tentap.models import User, Course, File, University, ActivationLink, Passwo
 
 
 # https://www.django-rest-framework.org/tutorial/1-serialization/
+class NormalUsersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        read_only_fields = ['id', 'username', 'university']
 
 class UsersSerializer(serializers.ModelSerializer):
     class Meta:
