@@ -57,14 +57,11 @@ class Course(models.Model):
 
 
 class Comment(models.Model):
-    author = models.ForeignKey('User', related_name='Comments', on_delete=models.PROTECT)
-    file = models.ForeignKey('File', related_name='Comments', on_delete=models.PROTECT, blank=True, null=True)
 
     comment = models.CharField(max_length=700)
 
 
 class Review(models.Model):
-    author = models.ForeignKey('User', related_name='Reviews', on_delete=models.PROTECT)
     course = models.ForeignKey('Course', related_name='Reviews', on_delete=models.PROTECT, blank=True, null=True)
     file = models.ForeignKey('File', related_name='Reviews', on_delete=models.PROTECT, blank=True, null=True)
 
