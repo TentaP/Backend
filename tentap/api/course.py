@@ -29,7 +29,10 @@ class userCourses(APIView):
 
     def get(self, request):
         user = get_user(request)
-        instances = user.university.courses.all()
+        university = user.university
+        if user.university is None:
+            return JsonResponse({'detail': 'User has no university'}, status=status.HTTP_400_BAD_REQUEST)
+        instances = university.courses.all()
         serializer = self.serializer_class(instances, many=True)
         return JsonResponse(serializer.data, safe=False, status=status.HTTP_200_OK)
 
