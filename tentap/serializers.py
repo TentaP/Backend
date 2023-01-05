@@ -59,7 +59,6 @@ class CourseSerializer(serializers.ModelSerializer):
 
 # File
 class FileSerializer(serializers.ModelSerializer):
-    uploaded_by = NormalUsersSerializer()
     has_solutions = serializers.BooleanField(required=False)
     file_type = serializers.CharField(required=False)
     file_ext = serializers.CharField()
