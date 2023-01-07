@@ -187,7 +187,7 @@ CORS_ALLOW_CREDENTIALS = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-EMAIL_HOST = 'smtp.mailtrap.io'
-EMAIL_HOST_USER = 'abcb9eafaaa6eb'
-EMAIL_HOST_PASSWORD = '7f95672a57d851'
-EMAIL_PORT = '2525'
+EMAIL_HOST = secret.mailtrap_setting["EMAIL_HOST"]
+EMAIL_HOST_USER = secret.mailtrap_setting["EMAIL_HOST_USER"]
+EMAIL_HOST_PASSWORD = secret.mailtrap_setting["EMAIL_HOST_PASSWORD"]
+EMAIL_PORT = secret.mailtrap_setting["EMAIL_PORT"]
