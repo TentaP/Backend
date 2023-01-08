@@ -18,7 +18,7 @@ Before you begin, make sure you have the following software installed on your sy
 - Enter a name for the database, and select the owner from the dropdown menu.
 - Click "Save" to create the database.
 
-## The secret file (important to run the project!)
+### The secret file (important to run the project!)
 In order to use this application, you will need to create a secret.py file in the root directory of the project. In this file, you should include your database credentials, your SECRET_KEY, your Amazon S3 credentials (if you are using S3 for file storage), and your mailtrap.io credentials (if you are using mailtrap.io for testing email functionality).
 
 Here is an example of what the secret.py file might look like:
