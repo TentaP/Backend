@@ -13,6 +13,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import django.core.mail.backends.console
+from django.core.management.utils import get_random_secret_key
 
 import secret
 import os
@@ -22,25 +23,58 @@ import os
 # MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # MEDIA_URL = '/media/'
 
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-AWS_S3_ACCESS_KEY_ID = secret.AWS_CONFIG['AWS_S3_ACCESS_KEY_ID']
-AWS_S3_SECRET_ACCESS_KEY=secret.AWS_CONFIG['AWS_S3_SECRET_ACCESS_KEY']
-AWS_STORAGE_BUCKET_NAME=secret.AWS_CONFIG['AWS_STORAGE_BUCKET_NAME']
-AWS_QUERYSTRING_AUTH =secret.AWS_CONFIG['AWS_QUERYSTRING_AUTH']
-AWS_S3_FILE_OVERWRITE = secret.AWS_CONFIG['AWS_S3_FILE_OVERWRITE']
-AWS_LOCATION = 'staticfiles'
+try:
+    #AWS
+    AWS_S3_ACCESS_KEY_ID = os.environ['AWS_S3_ACCESS_KEY_ID']
+    AWS_S3_SECRET_ACCESS_KEY = os.environ['AWS_S3_SECRET_ACCESS_KEY']
+    AWS_STORAGE_BUCKET_NAME = os.environ['AWS_STORAGE_BUCKET_NAME']
+    #DJANGO
+    SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', get_random_secret_key())
+    secret.SECRET_KEY = SECRET_KEY
+    DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': os.environ.get('DJANGO_DB_NAME', 'postgres'),
+                'USER': os.environ.get('DJANGO_DB_USER', 'postgres'),
+                'PASSWORD': os.environ.get('DJANGO_DB_PASSWORD', 'postgres'),
+                'HOST': os.environ.get('DJANGO_DB_HOST', 'localhost'),
+                'PORT': os.environ.get('DJANGO_DB_PORT', 5432),
+            }
+        }
+    #MAILTRAP
+    EMAIL_HOST = os.environ["EMAIL_HOST"]
+    EMAIL_HOST_USER = os.environ["EMAIL_HOST_USER"]
+    EMAIL_HOST_PASSWORD = os.environ["EMAIL_HOST_PASSWORD"]
+    EMAIL_PORT = os.environ["EMAIL_PORT"]
 
+except KeyError:
+    #AWS
+    AWS_S3_ACCESS_KEY_ID = secret.AWS_CONFIG['AWS_S3_ACCESS_KEY_ID']
+    AWS_S3_SECRET_ACCESS_KEY = secret.AWS_CONFIG['AWS_S3_SECRET_ACCESS_KEY']
+    AWS_STORAGE_BUCKET_NAME = secret.AWS_CONFIG['AWS_STORAGE_BUCKET_NAME']
+    #DJANGO
+    SECRET_KEY = secret.SECRET_KEY
+    DATABASES = secret.DB_SETTING
+    #MAILTRAP
+    EMAIL_HOST = secret.mailtrap_setting["EMAIL_HOST"]
+    EMAIL_HOST_USER = secret.mailtrap_setting["EMAIL_HOST_USER"]
+    EMAIL_HOST_PASSWORD = secret.mailtrap_setting["EMAIL_HOST_PASSWORD"]
+    EMAIL_PORT = secret.mailtrap_setting["EMAIL_PORT"]
+
+AWS_QUERYSTRING_AUTH = False
+AWS_S3_FILE_OVERWRITE = False
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+AWS_LOCATION = 'staticfiles'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = secret.SECRET_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production! TODO
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['0.0.0.0', 'localhost', '127.0.0.1', '[::1]']
 
 # Application definition
 
@@ -120,15 +154,22 @@ SIMPLE_JWT = {
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
 
-CORS_ORIGIN_WHITELIST = [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000'
-]
+try:
+    CORS_ORIGIN_WHITELIST = [
+        'http://localhost:'+os.environ['FRONTEND_PORT'],
+        'http://127.0.0.1:'+os.environ['FRONTEND_PORT'],
+    ]
+except KeyError: # Fallback
+    CORS_ORIGIN_WHITELIST = [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000'
+    ]
+
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost',
     'http://127.0.0.1'
-]
+    ]
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
@@ -142,7 +183,6 @@ CSRF_TRUSTED_ORIGINS = [
 
 # https://hevodata.com/learn/django-postgresql/#postgresql
 
-DATABASES = secret.DB_SETTING
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -176,10 +216,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 AUTH_USER_MODEL = 'tentap.User'
 
 CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 # Default primary key field type
@@ -187,7 +228,3 @@ CORS_ALLOW_CREDENTIALS = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-EMAIL_HOST = secret.mailtrap_setting["EMAIL_HOST"]
-EMAIL_HOST_USER = secret.mailtrap_setting["EMAIL_HOST_USER"]
-EMAIL_HOST_PASSWORD = secret.mailtrap_setting["EMAIL_HOST_PASSWORD"]
-EMAIL_PORT = secret.mailtrap_setting["EMAIL_PORT"]
