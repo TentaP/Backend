@@ -80,6 +80,7 @@ ALLOWED_HOSTS = ['0.0.0.0', 'localhost', '127.0.0.1', '[::1]']
 
 INSTALLED_APPS = [
     'tentap',
+    'daphne',
     'channels',
     'rest_framework',
     'corsheaders',
@@ -227,7 +228,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = '/static'
 AUTH_USER_MODEL = 'tentap.User'
 
 CORS_ORIGIN_ALLOW_ALL = True
